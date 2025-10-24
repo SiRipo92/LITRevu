@@ -1,0 +1,55 @@
+# === Python & Django ===
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+*.log
+*.pot
+*.pyc
+*.py.class
+
+# === Virtual Environment ===
+.venv/
+venv/
+env/
+ENV/
+*.env
+*.venv
+
+# === Django Static & Media Files ===
+staticfiles/
+media/
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+
+# === IDEs & Editors ===
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# === OS Files ===
+.DS_Store
+Thumbs.db
+
+# === Migrations Cache (optional, if you want to recreate DB cleanly later) ===
+*/migrations/__pycache__/
+*/migrations/*.py
+
+# === Byte-compiled files ===
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+bin/
+var/
+lib/
+lib64/
+pip-wheel-metadata/
