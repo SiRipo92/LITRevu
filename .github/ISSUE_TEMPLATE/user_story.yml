@@ -1,0 +1,119 @@
+name: User Story
+description: Template for defining and tracking a LITRevu user story (with Gherkin syntax and acceptance criteria)
+title: "[US##] - <Feature Title>"
+labels: ["user story", "backlog"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 🗂️ Functional Category
+        Select one or more categories that best describe this user story.
+
+  - type: checkboxes
+    id: functional-category
+    attributes:
+      label: Functional Category
+      options:
+        - label: Authentication
+        - label: Ticket Management
+        - label: Review Management
+        - label: Following System
+        - label: Feed System
+        - label: UI & Accessibility
+        - label: Documentation & Delivery
+
+  - type: markdown
+    attributes:
+      value: |
+        ## 🧾 User Story (Gherkin Syntax)
+        Write the story and scenarios following the **Given / When / Then** format.
+
+  - type: textarea
+    id: gherkin
+    attributes:
+      label: User Story (Feature + Scenarios)
+      placeholder: |
+        Feature: User Registration
+          As a visitor,
+          I want to create an account,
+          So that I can access the application.
+
+          Scenario: Successful signup
+            Given I am on the signup page
+            When I provide valid credentials
+            Then my account is created and I am redirected to the login page.
+
+          Scenario: Password mismatch
+            Given I enter mismatched passwords
+            When I click "Sign up"
+            Then I see an error message "Passwords do not match."
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        ## 🧮 Estimation
+
+  - type: dropdown
+    id: size
+    attributes:
+      label: T-shirt Size
+      options:
+        - XS (1–2h)
+        - S (2–4h)
+        - M (5–8h)
+        - L (8–12h)
+        - XL (13h+)
+    validations:
+      required: true
+
+  - type: input
+    id: points
+    attributes:
+      label: Story Points (1–13)
+      placeholder: "e.g. 3"
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        ## 📅 Sprint Assignment
+        Assign this story to a sprint or milestone.
+
+  - type: dropdown
+    id: sprint
+    attributes:
+      label: Sprint
+      options:
+        - Sprint 1 – Authentication System
+        - Sprint 2 – Ticket Management
+        - Sprint 3 – Review Management
+        - Sprint 4 – Following System
+        - Sprint 5 – Feed System
+        - Sprint 6 – UI & Accessibility
+        - Sprint 7 – Documentation & Delivery
+
+  - type: checkboxes
+    id: status
+    attributes:
+      label: Status
+      options:
+        - label: To Do
+        - label: In Progress
+        - label: Code Review
+        - label: Done
+
+  - type: markdown
+    attributes:
+      value: |
+        ## 🧠 Notes / Comments
+        Add any technical notes, dependencies, or related references.
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional Notes
+      placeholder: "e.g. Depends on US04 (Access Restriction). See wireframes pages 3–5."
