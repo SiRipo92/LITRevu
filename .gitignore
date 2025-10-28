@@ -10,6 +10,10 @@ __pycache__/
 *.pyc
 *.py.class
 
+# === Flake8 ===
+.flake8
+flake8_report
+
 # === Virtual Environment ===
 .venv/
 venv/
