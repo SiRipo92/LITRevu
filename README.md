@@ -20,35 +20,109 @@ It represents the **Minimum Viable Product (MVP)** of a platform where users can
 
 ## Project Structure
 ```bash
-LITRevu/
+LITRevu/                ← project root
+├── .venv/
+├── .gitignore
+├── db.sqlite3
+├── LICENSE.md
 ├── manage.py
-├── LITRevu/                 # Django configuration package
+├── README.md
+├── requirements.txt
+├── staticfiles/
+│   ├── admin/
+│   └── css/
+│
+├── templates/
+│   ├── registration/
+│   │   └── register.html
+│   ├── reviews/
+│   │   └── feed.html
+│   ├── users/
+│   │   └── index.html  ← Site UI Entry Point
+│   └── base.html       ← Base/root template
+│
+├── theme/
+│   ├── static/
+│   ├── static_src/     ← package.json, postcss.config.js, tailwind.config.js, src/styles.css
+│   ├── __init__.py
+│   └── apps.py
+│
+├── LITRevu/            ← Project folder = settings
 │   ├── __init__.py
 │   ├── asgi.py
 │   ├── settings.py
 │   ├── urls.py
 │   └── wsgi.py
 │
-├── reviews/                 # Main application package
+├── users/           ← Users
 │   ├── __init__.py
-│   ├── admin.py
 │   ├── apps.py
 │   ├── migrations/
+│   ├── admin.py     ← Super User (Admin)
+│   ├── forms.py     ← Registration & Login Forms
+│   ├── migrations/
+│   ├── tests/
+│   │     ├── __init.py
+│   │     ├── test_forms.py
+│   │     └── test_views.py
 │   ├── models.py
-│   ├── tests.py
+│   ├── tests/
 │   └── views.py
+│   └── urls.py
 │
-├── .venv/                   # Virtual environment (excluded from Git)
-├── .idea/                   # PyCharm project files (excluded from Git)
-└── README.md
+└── reviews/            ← Tickets and Feed
+    ├── __init__.py
+    ├── apps.py
+    ├── migrations/
+    ├── models.py
+    ├── tests/
+    └── views.py
 
 ```
 
 ## Installation & Setup
 1. Clone the repo
+```bash
+git clone https://github.com/SiRipo92/LITRevu
+```
 2. Create and activate the virtual environment
+
+    To activate: 
+    
+    - If using MACOS
+       ```bash
+       source venv/bin/activate
+       ```
+    - If using Windows
+      ```bash
+      venv\Scripts\activate
+      ```
 3. Install dependencies
-4. Run the development server
+```
+pip install -r requirements.txt
+```
+4. Split terminals (have two terminals open): one for backend, one for frontend
+   + For Terminal 1 (Backend):
+     + For the database:
+     ```bash
+     python manage.py migrate
+     ```
+     + Run backend server:
+     ```bash
+     python manage.py runserver
+     ```
+   + For Terminal 2 (Frontend):
+     + **First time setup:**
+       - Navigate to frontend folder to install Node.js and dependencies
+       ```bash
+       cd cd theme/static_src
+       npm install
+       cd ../../
+       ```
+       - To run frontend, once you've returned to project root:
+       ```bash
+       python manage.py tailwind start
+       ```
 
 ## User Stories
 + User Story 1 – Authentication 
@@ -81,7 +155,7 @@ As a user with accessibility needs, I can navigate the application easily follow
 
 ## 🧑‍💻 Development Notes
 
-Framework: Django 5.x
+Framework: Django 5.2.7
 
 Linter: flake8 (PEP8 compliance)
 
