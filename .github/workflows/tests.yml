@@ -29,8 +29,7 @@ jobs:
           PYTHONUNBUFFERED: "1"
         run: |
           coverage erase
-          # Run only tests in users/ and reviews/
-          coverage run scripts/run_nose2.py -v users reviews
+          coverage run manage.py test users reviews -v 2
           coverage report -m
           coverage xml
           coverage html
