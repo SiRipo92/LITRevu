@@ -10,10 +10,6 @@ __pycache__/
 *.pyc
 *.py.class
 
-# === Flake8 ===
-.flake8
-flake8_report
-
 # === Virtual Environment ===
 .venv/
 venv/
@@ -57,3 +53,7 @@ var/
 lib/
 lib64/
 pip-wheel-metadata/
+
+# --- allow flake8 report to be committed (badge + HTML)
+!flake8_report/
+!flake8_report/**
