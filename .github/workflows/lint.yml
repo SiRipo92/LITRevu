@@ -44,8 +44,8 @@ jobs:
       - name: Commit updated HTML report to repo
         if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
+          git config user.name "SiRipo92"
+          git config user.email "ripochesierra@gmail.com"
           git add flake8_report
           git commit -m "CI: update flake8 HTML report [skip ci]" || echo "No changes to commit"
           git push

@@ -2,6 +2,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 
+
 User = get_user_model()
 
 
@@ -65,19 +66,79 @@ class RegistrationViewTests(TestCase):
 
 
 class HomeViewTests(TestCase):
-    """Homepage behavior in US01: login UI visible, but no authentication occurs."""
+    """Homepage behavior in US02: login form processes authentication."""
 
-    def test_home_shows_login_form_but_does_not_process_login(self):
-        """POSTing credentials to / does not authenticate; login form remains visible."""
-
-        # Create a real user
+    def test_home_processes_login_and_redirects(self):
+        """POST valid credentials logs user in and redirects to feed."""
         User.objects.create_user(username="gina", password="P@ssw0rd!!")
-        # Post credentials to home — US01 should not authenticate yet
         url = reverse("home")
         resp = self.client.post(url, {"username": "gina", "password": "P@ssw0rd!!"})
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn(reverse("feed"), resp.url)
+
+
+class HomeViewLoginTests(TestCase):
+    """View-level tests for login functionality (US02)."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="ivy",
+            password="StrongPassw0rd!"
+        )
+        self.url = reverse("home")
+
+    def test_get_home_renders_login_form(self):
+        """GET / renders homepage with login form fields."""
+        resp = self.client.get(self.url)
         self.assertEqual(resp.status_code, 200)
-        # Still anonymous on subsequent request
-        resp2 = self.client.get(url)
-        self.assertTrue(resp2.wsgi_request.user.is_anonymous)
-        # Login form still present
-        self.assertContains(resp2, "Connectez-vous")
+        self.assertContains(resp, "Connectez-vous")
+        self.assertContains(resp, "id=\"id_username\"")
+        self.assertContains(resp, "id=\"id_password\"")
+
+    def test_inputs_have_aria_labels(self):
+        """Login form inputs should include ARIA labels for accessibility."""
+        resp = self.client.get(self.url)
+        html = resp.content.decode()
+
+        # accept both escaped and unescaped forms
+        self.assertTrue(
+            'aria-label="Nom d&#x27;utilisateur"' in html or 'aria-label="Nom d\'utilisateur"' in html,
+            "Missing aria-label for username input"
+        )
+        self.assertIn('aria-label="Mot de passe"', html)
+
+    def test_post_valid_login_redirects_to_feed(self):
+        """Valid credentials authenticate user and redirect to /feed."""
+        data = {"username": "ivy", "password": "StrongPassw0rd!", "remember_me": True}
+        resp = self.client.post(self.url, data)
+        # Redirect after login
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn(reverse("feed"), resp.url)
+
+    def test_post_invalid_login_stays_on_page_with_error(self):
+        """Invalid credentials re-render homepage and show error message."""
+        data = {"username": "ivy", "password": "wrongpass"}
+        resp = self.client.post(self.url, data)
+        self.assertEqual(resp.status_code, 200)
+        # Non-field error message from messages framework or form
+        self.assertContains(resp, "correct username and password")
+        self.assertTrue(resp.wsgi_request.user.is_anonymous)
+
+    def test_session_expires_on_browser_close_if_remember_me_unchecked(self):
+        """When 'remember_me' is unchecked, session should expire on browser close."""
+        data = {"username": "ivy", "password": "StrongPassw0rd!"}
+        resp = self.client.post(self.url, data, follow=True)
+        session = resp.wsgi_request.session
+        print("Expire on browser close:", session.get_expire_at_browser_close())
+        self.assertTrue(
+            session.get_expire_at_browser_close(),
+            "Expected session to expire at browser close, but it does not."
+        )
+
+    def test_session_persists_if_remember_me_checked(self):
+        """Checked 'remember_me' sets a 2-week session expiry."""
+        data = {"username": "ivy", "password": "StrongPassw0rd!", "remember_me": True}
+        resp = self.client.post(self.url, data, follow=True)
+        session = resp.wsgi_request.session
+        expiry = session.get_expiry_age()
+        self.assertEqual(expiry, 1209600, f"Expected 1209600, got {expiry}")

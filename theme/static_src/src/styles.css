@@ -9,12 +9,3 @@
   * the scope of this path.
   */
 @source "../../../**/*.{html,py,js}";
-
-// Centers placeholder text in Registration Form
-.auth-form input::placeholder {
-  text-align: center;
-}
-
-.auth-form input {
-  text-align: left;
-}

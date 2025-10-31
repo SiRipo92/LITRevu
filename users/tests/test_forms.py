@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 
-from users.forms import RegistrationForm
+from users.forms import RegistrationForm, LoginForm
 
 User = get_user_model()
 
@@ -67,3 +67,56 @@ class RegistrationFormTests(TestCase):
         })
         self.assertFalse(form.is_valid())
         self.assertIn("username", form.errors)
+
+
+class LoginFormTests(TestCase):
+    """Form-level tests for LoginForm (AuthenticationForm-based)."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="henry",
+            password="StrongPassw0rd!"
+        )
+
+    def test_valid_credentials_authenticate_user(self):
+        """Valid username/password combination authenticates successfully."""
+        form = LoginForm(request=None, data={
+            "username": "henry",
+            "password": "StrongPassw0rd!"
+        })
+        self.assertTrue(form.is_valid(), form.errors)
+        user = form.get_user()
+        self.assertEqual(user, self.user)
+
+    def test_invalid_credentials_rejected(self):
+        """Incorrect password should invalidate the form and show non-field error."""
+        form = LoginForm(request=None, data={
+            "username": "henry",
+            "password": "WrongPassword!"
+        })
+        self.assertFalse(form.is_valid())
+        self.assertIn("__all__", form.errors)
+
+    def test_blank_username_is_invalid(self):
+        """Missing username should trigger field error."""
+        form = LoginForm(request=None, data={
+            "username": "",
+            "password": "StrongPassw0rd!"
+        })
+        self.assertFalse(form.is_valid())
+        self.assertIn("username", form.errors)
+
+    def test_blank_password_is_invalid(self):
+        """Missing password should trigger field error."""
+        form = LoginForm(request=None, data={
+            "username": "henry",
+            "password": ""
+        })
+        self.assertFalse(form.is_valid())
+        self.assertIn("password", form.errors)
+
+    def test_remember_me_field_present_and_optional(self):
+        """'Se souvenir de moi' checkbox should exist but not be required."""
+        form = LoginForm()
+        self.assertIn("remember_me", form.fields)
+        self.assertFalse(form.fields["remember_me"].required)

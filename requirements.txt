@@ -5,3 +5,9 @@ mccabe==0.7.0
 pycodestyle==2.14.0
 pyflakes==3.4.0
 sqlparse==0.5.3
+django-tailwind==4.2.0
+
+# --- tests runner + coverage ---
+nose2[coverage_plugin]==0.15.1
+coverage==7.11.0
+colorama==0.4.6

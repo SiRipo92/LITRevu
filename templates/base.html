@@ -13,7 +13,7 @@
 
   <body class="min-h-screen bg-gray-50 text-gray-900">
     <!-- ===== SITE HEADER (visible on all pages) ===== -->
-    <header class="bg-blue-600 text-white py-4 px-6 relative flex items-center">
+    <header class="bg-blue-600 text-white py-4 px-6 relative flex items-center min-h-[100px]">
       <!-- ===== Left zone: logo / home link ===== -->
       <div class="flex items-center">
         <a href="{% url 'home' %}"
@@ -37,31 +37,8 @@
       {% block content %}{% endblock %}
     </main>
     <!-- Toast root that allows success/error messages with registration-->
-<div id="toast-root" class="fixed top-4 left-1/2 -translate-x-1/2 z-50"></div>
-    <script>
-    (function () {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get('registered') === '1') {
-        const u = params.get('u') || '';
-        const root = document.getElementById('toast-root');
-        if (root) {
-          const div = document.createElement('div');
-          div.className = 'px-4 py-3 rounded-lg border bg-green-50 border-green-200 text-green-800 shadow';
-          div.textContent = u
-            ? `Compte créé pour ${u}. Vous pouvez maintenant vous connecter.`
-            : 'Compte créé. Vous pouvez maintenant vous connecter.';
-          root.appendChild(div);
-
-          // Clean URL (remove query params) and auto-dismiss after 5s
-          const url = new URL(window.location);
-          url.searchParams.delete('registered');
-          url.searchParams.delete('u');
-          window.history.replaceState({}, '', url);
-          setTimeout(() => div.remove(), 5000);
-        }
-      }
-    })();
-    </script>
+    <div id="toast-root" class="fixed top-4 left-1/2 -translate-x-1/2 z-50"></div>
+    <script src="{% static 'js/auth_forms.js' %}"></script>
 
   </body>
 </html>

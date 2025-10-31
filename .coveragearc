@@ -1,0 +1,19 @@
+[run]
+branch = True
+# Measure only these packages
+source =
+    users
+    reviews
+    tests
+# Paths to exclude entirely
+omit =
+    */migrations/*
+    LITRevu/settings.py
+    LITRevu/settings/*.py
+
+[report]
+show_missing = True
+skip_empty = True
+
+[html]
+directory = htmlcov

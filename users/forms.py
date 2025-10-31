@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import UserCreationForm
+from django import forms
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 
 User = get_user_model()
 
@@ -33,16 +34,62 @@ class RegistrationForm(UserCreationForm):
         repeating CSS classes. Adjust here if you change your design system.
         """
         super().__init__(*args, **kwargs)
-        for name, field in self.fields.items():
-            field.widget.attrs.update({
-                "class": "border border-gray-300 rounded-md px-4 py-2 w-full"
-                         "focus:outline-none focus:ring-2 focus:ring-blue-500"
-            })
+        # Common Tailwind classes for all inputs
+        base_classes = (
+            "border border-gray-300 rounded-md px-4 py-2 w-full "
+            "text-left placeholder:text-center "
+            "text-gray-800 placeholder-gray-400 bg-white "
+            "focus:outline-none focus:ring-2 focus:ring-blue-500 "
+            "focus:border-blue-500 transition"
+        )
+
+        # Assign consistent styling + placeholders
+        self.fields["username"].widget.attrs.update({
+            "class": base_classes,
+            "placeholder": "Nom d'utilisateur",
+        })
         self.fields["password1"].widget.attrs.update({
-            "class": "border border-gray-300 rounded-md px-4 py-2 w-full "
-                     "focus:outline-none focus:ring-2 focus:ring-blue-500"
+            "class": base_classes,
+            "placeholder": "Mot de passe",
         })
         self.fields["password2"].widget.attrs.update({
-            "class": "border border-gray-300 rounded-md px-4 py-2 w-full "
-                     "focus:outline-none focus:ring-2 focus:ring-blue-500"
+            "class": base_classes,
+            "placeholder": "Confirmer mot de passe",
+        })
+
+
+class LoginForm(AuthenticationForm):
+    """
+    Custom login form with Tailwind CSS styling and placeholders
+    """
+
+    remember_me = forms.BooleanField(
+        required=False,
+        widget=forms.CheckboxInput(attrs={
+            "class": "h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+        }),
+        label="Se souvenir de moi"
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        base_classes = (
+            "border border-gray-300 rounded-md px-4 py-2 w-full "
+            "text-left placeholder:text-center "
+            "text-gray-800 placeholder-gray-400 bg-white "
+            "focus:outline-none focus:ring-2 focus:ring-blue-500 "
+            "focus:border-blue-500 transition"
+        )
+
+        # Apply consistent classes and placeholders
+        self.fields["username"].widget.attrs.update({
+            "class": base_classes,
+            "placeholder": "Nom d'utilisateur",
+            "aria-label": "Nom d'utilisateur",
+        })
+        self.fields["password"].widget.attrs.update({
+            "class": base_classes,
+            "placeholder": "Mot de passe",
+            "aria-label": "Mot de passe",
         })
