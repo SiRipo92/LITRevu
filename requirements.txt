@@ -5,7 +5,7 @@ mccabe==0.7.0
 pycodestyle==2.14.0
 pyflakes==3.4.0
 sqlparse==0.5.3
-
+django-tailwind==4.2.0
 
 # --- Testing runner + coverage ---
 green==4.0.2            # colorful test runner with Django integration

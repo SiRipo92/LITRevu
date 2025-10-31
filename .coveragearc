@@ -4,10 +4,10 @@ branch = True
 source =
     users
     reviews
+    tests
 # Paths to exclude entirely
 omit =
     */migrations/*
-    */tests/*
     LITRevu/settings.py
     LITRevu/settings/*.py
 
