@@ -1,0 +1,44 @@
+name: CI (lint + tests)
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Lint (flake8)
+        run: |
+          flake8 .
+
+      # Use coverage to run Django's tests through Green's Django runner
+      - name: Run tests with coverage (Green + Django)
+        run: |
+          coverage erase
+          python manage.py test --testrunner=green.djangorunner.DjangoRunner -v 2
+          coverage report -m
+          coverage xml
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml
+          path: coverage.xml

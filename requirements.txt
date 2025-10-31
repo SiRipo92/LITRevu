@@ -5,3 +5,8 @@ mccabe==0.7.0
 pycodestyle==2.14.0
 pyflakes==3.4.0
 sqlparse==0.5.3
+
+
+# --- Testing runner + coverage ---
+green==4.0.2            # colorful test runner with Django integration
+coverage==7.11.0        # code coverage tool
