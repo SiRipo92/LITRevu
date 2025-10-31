@@ -3,7 +3,7 @@
 
 {% block content %}
 <!-- ===== MAIN CONTENT ===== -->
-<main class="flex flex-col md:flex-row justify-center items-center 
+<main class="flex flex-col md:flex-row justify-center items-start
              gap-8 mx-auto w-[90%] md:w-[80%] my-16">
 
   <!-- ==== LEFT COLUMN: REGISTER ==== -->
@@ -20,46 +20,71 @@
   </section>
 
   <!-- ==== RIGHT COLUMN: LOGIN ==== -->
-    <section class="flex flex-col justify-center items-center w-full md:w-1/2 space-y-6">
-      <h2 class="text-3xl font-semibold text-gray-800">
-        Connectez-vous
-      </h2>
+  <section class="flex flex-col justify-center items-center w-full md:w-1/2 space-y-6">
+    <h2 class="text-3xl font-semibold text-gray-800">
+      Connectez-vous
+    </h2>
 
-      <form method="post" action=""
-            class="flex flex-col items-center w-full space-y-4">
-        {% csrf_token %}
+    <form method="post" action="" class="auth-form flex flex-col items-center w-full space-y-4">
+      {% csrf_token %}
 
-        {# Non-field errors like invalid credentials #}
-        {% if form.non_field_errors %}
-          <div class="bg-red-50 text-red-700 px-4 py-2 rounded w-4/5">
-            {{ form.non_field_errors }}
-          </div>
+      {# Non-field errors (invalid credentials) #}
+      {% if form.non_field_errors %}
+      <div class="bg-red-50 text-red-700 px-4 py-2 rounded w-4/5 text-center">
+        {{ form.non_field_errors }}
+      </div>
+      {% endif %}
+
+      <!-- === Username Field === -->
+      <div class="w-4/5">
+        {{ form.username }}
+        {% if form.username.errors %}
+          <p class="text-red-600 text-sm mt-1 text-center">
+            {{ form.username.errors|striptags }}
+          </p>
         {% endif %}
+      </div>
 
-        <div class="w-4/5">
-          <label class="block mb-1">Nom d'utilisateur</label>
-          {{ form.username }}
-          {% if form.username.errors %}
-            <p class="text-red-600 text-sm mt-1">{{ form.username.errors|striptags }}</p>
-          {% endif %}
-        </div>
-
-        <div class="w-4/5">
-          <label class="block mb-1">Mot de passe</label>
+      <!-- === Password Field with Eye Toggle === -->
+      <div class="w-4/5 relative">
+        <div class="relative">
           {{ form.password }}
-          {% if form.password.errors %}
-            <p class="text-red-600 text-sm mt-1">{{ form.password.errors|striptags }}</p>
-          {% endif %}
-        </div>
-
-        <div class="flex justify-end w-4/5">
-          <button type="submit"
-                  class="bg-blue-600 text-white font-medium px-6 py-2 rounded-lg
-                         hover:bg-blue-700 transition">
-            Se connecter
+          <button type="button"
+                  class="absolute right-3 top-3 text-gray-600 hover:text-gray-900"
+                  onclick="togglePassword('id_password', this)">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                 stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M2.25 12s3.75-6.75 9.75-6.75S21.75 12 21.75 12s-3.75 6.75-9.75 6.75S2.25 12 2.25 12z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
           </button>
         </div>
-      </form>
-    </section>
+
+        {% if form.password.errors %}
+          <p class="text-red-600 text-sm mt-1 text-center">
+            {{ form.password.errors|striptags }}
+          </p>
+        {% endif %}
+      </div>
+
+      <!-- === Remember Me Checkbox === -->
+      <div class="flex items-center justify-between w-4/5 mt-2">
+        <label class="flex items-center gap-2 text-gray-700 text-sm cursor-pointer">
+          {{ form.remember_me }}
+          <span>{{ form.remember_me.label }}</span>
+        </label>
+      </div>
+
+      <!-- === Submit Button === -->
+      <div class="flex justify-end w-4/5">
+        <button type="submit"
+                class="bg-blue-600 text-white font-medium px-6 py-2 rounded-lg
+                       hover:bg-white hover:text-blue-600 hover:border hover:border-blue-600 transition-colors duration-200">
+          Se connecter
+        </button>
+      </div>
+    </form>
+  </section>
 </main>
 {% endblock %}
