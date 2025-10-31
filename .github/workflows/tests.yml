@@ -24,12 +24,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run tests with coverage (Green + Django)
+      - name: Run tests with coverage (Django default runner)
         env:
           PYTHONUNBUFFERED: "1"
         run: |
           coverage erase
-          coverage run manage.py test users reviews --testrunner=green.djangorunner.DjangoRunner -v 2
+          coverage run manage.py test users reviews --testrunner=django.test.runner.DiscoverRunner -v 2
           coverage report -m
           coverage xml
           coverage html
