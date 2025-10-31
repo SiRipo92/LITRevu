@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 permissions:
-  contents: write
+  contents: write  # needed to commit flake8_report on push to main
 
 jobs:
   lint:
@@ -26,9 +26,9 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          # anybadge pinned to a version that supports --output
-          pip install flake8 flake8-html 'anybadge>=1.10.1'
+          pip install flake8 flake8-html anybadge
           pip install -r requirements.txt
+          anybadge --version || true
 
       - name: Generate fresh flake8 HTML report (non-fatal) and badge
         id: lint_report
@@ -48,9 +48,9 @@ jobs:
 
           # 4) Create/update badge.svg based on strict status
           if [ "$STATUS" -eq 0 ]; then
-            anybadge --label "flake8" --value "passing" --color "#28a745" --output flake8_report/badge.svg
+            anybadge --label "flake8" --value "passing" --color "#28a745" -f flake8_report/badge.svg
           else
-            anybadge --label "flake8" --value "failing" --color "#cb2431" --output flake8_report/badge.svg
+            anybadge --label "flake8" --value "failing" --color "#cb2431" -f flake8_report/badge.svg
           fi
 
           # 5) Expose status for the next step
