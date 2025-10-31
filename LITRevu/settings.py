@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -134,5 +135,6 @@ LOGIN_URL = "home"
 LOGIN_REDIRECT_URL = "feed"
 LOGOUT_REDIRECT_URL = "home"
 
-# Testing
-TEST_RUNNER = "green.djangorunner.DjangoRunner"
+# Testing with Nose
+if os.getenv("USE_GREEN_TEST_RUNNER", "0") == "1":
+    TEST_RUNNER = "green.djangorunner.DjangoRunner"
