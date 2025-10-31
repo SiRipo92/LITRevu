@@ -55,7 +55,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.14'     # align to your project; change to '3.11' if you prefer
+          python-version: '3.14'     # or '3.11' if you prefer
           cache: 'pip'
 
       - name: Install dependencies
@@ -63,31 +63,53 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run tests with coverage (nose2 via temp runner)
+      - name: Run tests with coverage (nose2 via temp runner with Django test DB)
         env:
           PYTHONUNBUFFERED: "1"
           DJANGO_SETTINGS_MODULE: "LITRevu.settings"
         run: |
           coverage erase
-
-          # Create a temporary runner that sets up Django before nose2 discovers tests
+          
+          # Create a temporary runner that:
+          # - calls django.setup()
+          # - sets up Django test environment + test DB (DiscoverRunner)
+          # - runs nose2 for users/ and reviews/
+          # - tears down DB/environment
           cat > nose2_ci_runner.py << 'PYCODE'
           import os, sys
           import django
-          django.setup()  # initialize Django app registry before importing tests
-          from nose2 import discover
-          sys.exit(discover())
+          from django.test.utils import setup_test_environment, teardown_test_environment
+          from django.test.runner import DiscoverRunner
+        
+          # DJANGO_SETTINGS_MODULE is provided by the workflow env
+          django.setup()
+        
+          # Prepare Django's test env and create test DB(s)
+          setup_test_environment()
+          runner = DiscoverRunner(verbosity=1, interactive=False)
+          old_config = runner.setup_databases()
+        
+          try:
+            # Run nose2 discovery with CLI args (e.g., "-v users reviews")
+            from nose2 import discover
+            exit_code = discover()
+          finally:
+            # Always tear down test DB(s) and environment
+            runner.teardown_databases(old_config)
+            teardown_test_environment()
+        
+          sys.exit(exit_code)
           PYCODE
-
+          
           # Run only tests in users/ and reviews/ with verbose output
           coverage run nose2_ci_runner.py -v users reviews
           coverage report -m
           coverage xml
           coverage html
-
+          
           # Clean up the temp runner
           rm -f nose2_ci_runner.py
-
+        
       - name: Upload coverage artifacts
         if: always()
         uses: actions/upload-artifact@v4
