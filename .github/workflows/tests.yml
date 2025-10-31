@@ -1,4 +1,4 @@
-name: Django tests (Green + Coverage)
+name: Django tests
 
 on:
   push:
