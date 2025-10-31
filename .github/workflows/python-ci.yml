@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 permissions:
-  contents: write  # needed to commit flake8_report back to the repo on push to main
+  contents: write
 
 jobs:
   lint:
@@ -26,46 +26,44 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install flake8 flake8-html anybadge
+          # anybadge pinned to a version that supports --output
+          pip install flake8 flake8-html 'anybadge>=1.10.1'
           pip install -r requirements.txt
 
       - name: Generate fresh flake8 HTML report (non-fatal) and badge
         id: lint_report
         run: |
-          # 1) Clean & recreate the report directory so it never accumulates files
+          # 1) Clean & recreate report dir so it never accumulates files
           rm -rf flake8_report
           mkdir -p flake8_report
 
-          # 2) Non-fatal HTML report for browsing
-          #    (respects your .flake8 config; errors don't stop the job here)
+          # 2) Non-fatal HTML report (respects .flake8)
           flake8 . --format=html --htmldir=flake8_report || true
 
-          # 3) Capture strict status without failing the step
+          # 3) Strict flake8 check; capture status but don't fail the step yet
           set +e
           flake8 .
           STATUS=$?
           set -e
 
-          # 4) Create/update a badge.svg reflecting the strict status
-          mkdir -p flake8_report
+          # 4) Create/update badge.svg based on strict status
           if [ "$STATUS" -eq 0 ]; then
             anybadge --label "flake8" --value "passing" --color "#28a745" --output flake8_report/badge.svg
           else
             anybadge --label "flake8" --value "failing" --color "#cb2431" --output flake8_report/badge.svg
           fi
 
-          # 5) Propagate strict status to subsequent steps via an output
+          # 5) Expose status for the next step
           echo "status=$STATUS" >> $GITHUB_OUTPUT
 
       - name: Strict gate (fail job if lint errors)
-        # Use the captured status to fail this step (and job), but later steps with "if: always()" still run
         run: |
           if [ "${{ steps.lint_report.outputs.status }}" != "0" ]; then
             echo "flake8 found issues."
             exit 1
           fi
 
-      - name: Upload flake8 report as artifact (html + badge)
+      - name: Upload flake8 report as artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -77,7 +75,6 @@ jobs:
         run: |
           git config user.name "SiRipo92"
           git config user.email "ripochesierra@gmail.com"
-          # add/remove changed files in this folder only
           git add -A flake8_report
           git commit -m "CI: update flake8 HTML report & badge [skip ci]" || echo "No changes to commit"
           git push
@@ -107,7 +104,6 @@ jobs:
         run: |
           coverage erase
 
-          # Temporary runner that sets up Django test env & DB, runs nose2, then tears down
           cat > nose2_ci_runner.py << 'PYCODE'
           import sys
           import django
@@ -127,7 +123,6 @@ jobs:
           sys.exit(code)
           PYCODE
 
-          # Run only users/ and reviews/ tests
           coverage run nose2_ci_runner.py -v users reviews
           coverage report -m
           coverage xml
