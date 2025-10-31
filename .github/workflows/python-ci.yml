@@ -1,0 +1,98 @@
+name: Python CI (lint + tests)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read  # no commits from CI; artifacts only
+
+jobs:
+  lint:
+    name: Lint with flake8
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 flake8-html
+          pip install -r requirements.txt
+
+      - name: Generate flake8 HTML report (non-fatal) and run strict check
+        run: |
+          rm -rf flake8_report
+          mkdir -p flake8_report
+          # Non-fatal HTML report (uses your .flake8 config)
+          flake8 . --format=html --htmldir=flake8_report || true
+          # Strict gate (job fails on lint errors)
+          flake8 .
+
+      - name: Upload flake8 report as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flake8_report
+          path: flake8_report/**
+
+  tests:
+    name: Django tests + coverage (nose2)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'     # align to your project; change to '3.11' if you prefer
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run tests with coverage (nose2 via temp runner)
+        env:
+          PYTHONUNBUFFERED: "1"
+          DJANGO_SETTINGS_MODULE: "LITRevu.settings"
+        run: |
+          coverage erase
+
+          # Create a temporary runner that sets up Django before nose2 discovers tests
+          cat > nose2_ci_runner.py << 'PYCODE'
+          import os, sys
+          import django
+          django.setup()  # initialize Django app registry before importing tests
+          from nose2 import discover
+          sys.exit(discover())
+          PYCODE
+
+          # Run only tests in users/ and reviews/ with verbose output
+          coverage run nose2_ci_runner.py -v users reviews
+          coverage report -m
+          coverage xml
+          coverage html
+
+          # Clean up the temp runner
+          rm -f nose2_ci_runner.py
+
+      - name: Upload coverage artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports
+          path: |
+            coverage.xml
+            htmlcov/**
