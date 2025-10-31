@@ -11,46 +11,61 @@
       {% csrf_token %}
 
       <div class="w-4/5">
-        <label class="block mb-1">Nom d'utilisateur</label>
+        <label class="hidden mb-1">Nom d'utilisateur</label>
         {{ form.username }}
         {% if form.username.errors %}
           <p class="text-red-600 text-sm mt-1">{{ form.username.errors|striptags }}</p>
         {% endif %}
       </div>
 
-      <div class="w-4/5">
-        <label class="block mb-1">Mot de passe</label>
-        {{ form.password1 }}
-        {% if form.password1.errors %}
-          <p class="text-red-600 text-sm mt-1">{{ form.password1.errors|striptags }}</p>
-        {% endif %}
-      </div>
+      <div class="w-4/5 relative">
+          <label class="hidden mb-1">Mot de passe</label>
+          <div class="relative">
+            {{ form.password1 }}
+            <button type="button"
+                    class="absolute right-3 top-2.5 text-gray-600 hover:text-gray-900"
+                    onclick="togglePassword('id_password1', this)">
+              <!-- Eye open (visible) -->
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                   stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M2.25 12s3.75-6.75 9.75-6.75S21.75 12 21.75 12s-3.75 6.75-9.75 6.75S2.25 12 2.25 12z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            </button>
+          </div>
+          {% if form.password1.errors %}
+            <p class="text-red-600 text-sm mt-1">{{ form.password1.errors|striptags }}</p>
+          {% endif %}
+        </div>
 
-      <div class="w-4/5">
-        <label class="block mb-1">Confirmer mot de passe</label>
-        {{ form.password2 }}
-        {% if form.password2.errors %}
-          <p class="text-red-600 text-sm mt-1">{{ form.password2.errors|striptags }}</p>
-        {% endif %}
-      </div>
-
-      <div class="flex justify-end w-4/5 gap-4">
-        <a
-          href="{% url 'home' %}"
-          class="border border-blue-600 text-blue-600 font-medium px-6 py-2 rounded-lg
-                 hover:bg-blue-600 hover:text-white transition-colors duration-200
-                 text-center"
-          role="button">
-          Retourner
-        </a>
-
-        <button
-          type="submit"
-          class="bg-blue-600 text-white font-medium px-6 py-2 rounded-lg
-                 hover:bg-white hover:text-blue-600 hover:border hover:border-blue-600 transition-colors duration-200">
-          S'inscrire
-        </button>
-      </div>
+        <div class="w-4/5 relative">
+          <label class="hidden mb-1">Confirmer mot de passe</label>
+          <div class="relative">
+            {{ form.password2 }}
+            <button type="button"
+                    class="absolute right-3 top-2.5 text-gray-600 hover:text-gray-900"
+                    onclick="togglePassword('id_password2', this)">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                   stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M2.25 12s3.75-6.75 9.75-6.75S21.75 12 21.75 12s-3.75 6.75-9.75 6.75S2.25 12 2.25 12z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            </button>
+          </div>
+          {% if form.password2.errors %}
+            <p class="text-red-600 text-sm mt-1">{{ form.password2.errors|striptags }}</p>
+          {% endif %}
+        </div>
+        <div class="flex justify-end w-4/5 gap-4">
+            <a href="{% url 'home' %}" class="border border-blue-600 text-blue-600 font-medium px-6 py-2 rounded-lg hover:bg-blue-600 hover:text-white transition-colors duration-200 text-center" role="button">
+                Retourner
+            </a>
+            <button type="submit" class="bg-blue-600 text-white font-medium px-6 py-2 rounded-lg hover:bg-white hover:text-blue-600 hover:border hover:border-blue-600 transition-colors duration-200">
+                S'inscrire
+            </button>
+        </div>
     </form>
   </section>
 {% endblock %}

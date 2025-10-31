@@ -33,16 +33,22 @@ class RegistrationForm(UserCreationForm):
         repeating CSS classes. Adjust here if you change your design system.
         """
         super().__init__(*args, **kwargs)
-        for name, field in self.fields.items():
-            field.widget.attrs.update({
-                "class": "border border-gray-300 rounded-md px-4 py-2 w-full"
-                         "focus:outline-none focus:ring-2 focus:ring-blue-500"
-            })
+        # Common Tailwind classes for all inputs
+        base_classes = (
+            "border border-gray-300 rounded-md px-4 py-2 w-full "
+            "focus:outline-none focus:ring-2 focus:ring-blue-500"
+        )
+
+        # Assign consistent styling + placeholders
+        self.fields["username"].widget.attrs.update({
+            "class": base_classes,
+            "placeholder": "Nom d'utilisateur",
+        })
         self.fields["password1"].widget.attrs.update({
-            "class": "border border-gray-300 rounded-md px-4 py-2 w-full "
-                     "focus:outline-none focus:ring-2 focus:ring-blue-500"
+            "class": base_classes,
+            "placeholder": "Mot de passe",
         })
         self.fields["password2"].widget.attrs.update({
-            "class": "border border-gray-300 rounded-md px-4 py-2 w-full "
-                     "focus:outline-none focus:ring-2 focus:ring-blue-500"
+            "class": base_classes,
+            "placeholder": "Confirmer mot de passe",
         })
