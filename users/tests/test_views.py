@@ -70,7 +70,7 @@ class HomeViewTests(TestCase):
 
     def test_home_processes_login_and_redirects(self):
         """POST valid credentials logs user in and redirects to feed."""
-        user = User.objects.create_user(username="gina", password="P@ssw0rd!!")
+        User.objects.create_user(username="gina", password="P@ssw0rd!!")
         url = reverse("home")
         resp = self.client.post(url, {"username": "gina", "password": "P@ssw0rd!!"})
         self.assertEqual(resp.status_code, 302)
