@@ -1,0 +1,120 @@
+name: Python CI (lint + tests)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read  # no commits from CI; artifacts only
+
+jobs:
+  lint:
+    name: Lint with flake8
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 flake8-html
+          pip install -r requirements.txt
+
+      - name: Generate flake8 HTML report (non-fatal) and run strict check
+        run: |
+          rm -rf flake8_report
+          mkdir -p flake8_report
+          # Non-fatal HTML report (uses your .flake8 config)
+          flake8 . --format=html --htmldir=flake8_report || true
+          # Strict gate (job fails on lint errors)
+          flake8 .
+
+      - name: Upload flake8 report as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flake8_report
+          path: flake8_report/**
+
+  tests:
+    name: Django tests + coverage (nose2)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'     # or '3.11' if you prefer
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run tests with coverage (nose2 via temp runner with Django test DB)
+        env:
+          PYTHONUNBUFFERED: "1"
+          DJANGO_SETTINGS_MODULE: "LITRevu.settings"
+        run: |
+          coverage erase
+          
+          # Create a temporary runner that:
+          # - calls django.setup()
+          # - sets up Django test environment + test DB (DiscoverRunner)
+          # - runs nose2 for users/ and reviews/
+          # - tears down DB/environment
+          cat > nose2_ci_runner.py << 'PYCODE'
+          import os, sys
+          import django
+          from django.test.utils import setup_test_environment, teardown_test_environment
+          from django.test.runner import DiscoverRunner
+        
+          # DJANGO_SETTINGS_MODULE is provided by the workflow env
+          django.setup()
+        
+          # Prepare Django's test env and create test DB(s)
+          setup_test_environment()
+          runner = DiscoverRunner(verbosity=1, interactive=False)
+          old_config = runner.setup_databases()
+        
+          try:
+            # Run nose2 discovery with CLI args (e.g., "-v users reviews")
+            from nose2 import discover
+            exit_code = discover()
+          finally:
+            # Always tear down test DB(s) and environment
+            runner.teardown_databases(old_config)
+            teardown_test_environment()
+        
+          sys.exit(exit_code)
+          PYCODE
+          
+          # Run only tests in users/ and reviews/ with verbose output
+          coverage run nose2_ci_runner.py -v users reviews
+          coverage report -m
+          coverage xml
+          coverage html
+          
+          # Clean up the temp runner
+          rm -f nose2_ci_runner.py
+        
+      - name: Upload coverage artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports
+          path: |
+            coverage.xml
+            htmlcov/**
