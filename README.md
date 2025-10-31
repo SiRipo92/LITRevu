@@ -1,7 +1,6 @@
 # LITRevu — Django Web Application
 
-![Flake8 Lint](https://github.com/SiRipo92/LITRevu/actions/workflows/lint.yml/badge.svg)
-
+![Flake8](./flake8_report/badge.svg)
 
 * **Author:** Sierra Ripoche
 * **Project:** Développez une application Web en utilisant Django — OpenClassrooms
