@@ -16,12 +16,17 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-
+from users.views import logout_view
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # Home + auth handled by users
-    path("", include("users.urls")),  # homepage + auth
-    path("flux/", include("reviews.urls")),  # Private app after login)
 
+    # Home + auth handled by users
+    path("", include("users.urls")),
+
+    # Reviews area (authenticated area)
+    path("flux/", include(("reviews.urls", "reviews"), namespace="reviews")),
+
+    # Logout endpoint (POST form submits here)
+    path("logout/", logout_view, name="logout"),
 ]

@@ -132,7 +132,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Redirections
 LOGIN_URL = "home"
-LOGIN_REDIRECT_URL = "feed"
+LOGIN_REDIRECT_URL = "reviews:feed"   # explicit
 LOGOUT_REDIRECT_URL = "home"
 
 # Testing with Nose
