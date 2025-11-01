@@ -13,32 +13,140 @@
 
   <body class="min-h-screen bg-gray-50 text-gray-900">
     <!-- ===== SITE HEADER (visible on all pages) ===== -->
-    <header class="bg-blue-600 text-white py-4 px-6 relative flex items-center min-h-[100px]">
-      <!-- ===== Left zone: logo / home link ===== -->
-      <div class="flex items-center">
+    <header
+      class="sticky top-0 z-50 bg-blue-600 text-white px-4 md:px-6
+             grid grid-cols-2 md:grid-cols-[1fr_auto_1fr]
+             items-center h-16 md:h-24">
+
+      {# LEFT CELL: spacer or small home link on md+ #}
+      <div class="hidden md:flex items-center">
         <a href="{% url 'home' %}"
-           class="flex items-center focus:outline-none focus:ring-2 focus:ring-white rounded"
+           class="flex items-center focus:outline-none focus:ring-2 focus:ring-white rounded px-2 py-1"
            aria-label="Accueil">
           <span class="sr-only">Accueil</span>
         </a>
       </div>
 
-      <!-- ===== Center title ===== -->
-      <div class="absolute inset-x-0 flex justify-center">
-        <h1 class="text-2xl md:text-3xl font-bold tracking-wide text-center">
+      {# CENTER CELL: title always centered on md+; left-aligned on mobile #}
+      <div class="justify-self-start md:justify-self-center">
+        <h1 class="text-xl lg:text-3xl font-bold tracking-wide">
           LITReview
         </h1>
       </div>
+
+      {# RIGHT CELL: burger on mobile; NAV on md+ #}
+      <div class="justify-self-end">
+        {% if request.user.is_authenticated %}
+          {# Burger only < md #}
+          <button id="burgerBtn"
+            class="relative md:hidden grid place-items-center w-10 h-10 rounded
+         focus:outline-none focus:ring-2 focus:ring-white"
+            aria-label="Ouvrir le menu"
+            aria-controls="mobileMenu"
+            aria-expanded="false"
+            type="button">
+              <!-- Burger icon -->
+              <svg id="burgerIcon"
+                   class="pointer-events-none absolute inset-0 m-auto w-6 h-6 transition-opacity duration-200"
+                   viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <!-- X icon -->
+              <svg id="closeIcon"
+                   class="pointer-events-none absolute inset-0 m-auto w-6 h-6 opacity-0 hidden transition-opacity duration-200"
+                   viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M6 6l12 12M18 6l-12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </button>
+
+          {# NAV only on md+ (RIGHT side) #}
+          <nav class="hidden md:flex items-center gap-2 lg:gap-4"
+               role="navigation" aria-label="Navigation principale">
+            <a href="{% url 'reviews:feed' %}"
+               class="hover:underline focus:outline-none focus:ring-2 focus:ring-white rounded px-1
+                      md:text-[.75rem] lg:text-[0.9rem] xl:text-base">
+              Flux
+            </a>
+            <a href="{% url 'reviews:posts' %}"
+               class="hover:underline focus:outline-none focus:ring-2 focus:ring-white rounded px-1
+                      md:text-[.75rem] lg:text-[0.9rem] xl:text-base">
+              Posts
+            </a>
+            <a href="{% url 'reviews:follows' %}"
+               class="hover:underline focus:outline-none focus:ring-2 focus:ring-white rounded px-1
+                      md:text-[.75rem] lg:text-[0.9rem] xl:text-base">
+              Abonnements
+            </a>
+            <form method="post" action="{% url 'logout' %}" class="inline">
+              {% csrf_token %}
+              <button type="submit"
+                      class="hover:underline focus:outline-none focus:ring-2 focus:ring-white rounded px-1
+                             md:text-[.75rem] lg:text-[0.9rem] xl:text-base">
+                Se déconnecter
+              </button>
+            </form>
+          </nav>
+        {% endif %}
+      </div>
     </header>
+
+    <!-- Toast root that allows success/error messages with registration-->
+    <div id="toast-root"
+         class="fixed left-1/2 -translate-x-1/2 top-[76px] md:top-[116px] z-50 pointer-events-none"
+         role="status"
+         aria-live="polite"
+         aria-atomic="true">
+    </div>
+
+    {% if request.user.is_authenticated %}
+      <!-- ===== MOBILE DRAWER + OVERLAY (only rendered for authenticated users) ===== -->
+      <div id="mobileOverlay"
+       class="fixed left-0 right-0 top-16 md:top-24 z-30 hidden
+            h-[calc(100vh-4rem)] md:h-[calc(100vh-6rem)]
+            bg-black/60
+            opacity-0 transition-opacity duration-300 ease-out"
+       aria-hidden="true"></div>
+
+      <!-- Drawer BELOW header (opens from right) -->
+      <aside id="mobileMenu"
+             class="fixed right-0 top-16 md:top-24 z-40 hidden
+              h-[calc(100vh-4rem)] md:h-[calc(100vh-6rem)]
+              w-[60%] sm:w-[50%] md:w-[40%] max-w-[420px]
+              bg-white text-gray-900 shadow-xl will-change-transform
+              translate-x-full opacity-0
+              transition-[transform,opacity] duration-500 ease-out"
+             role="dialog"
+             aria-modal="true"
+             aria-label="Menu mobile">
+        <nav class="h-full overflow-y-auto p-6"
+             role="navigation" aria-label="Navigation mobile">
+          <ul class="flex flex-col gap-4">
+            <li><a class="text-blue-600 font-medium focus:outline-none focus:ring-2 focus:ring-blue-600 rounded px-2 py-1" href="{% url 'reviews:feed' %}">Flux</a></li>
+            <li><a class="text-blue-600 font-medium focus:outline-none focus:ring-2 focus:ring-blue-600 rounded px-2 py-1" href="{% url 'reviews:posts' %}">Posts</a></li>
+            <li><a class="text-blue-600 font-medium focus:outline-none focus:ring-2 focus:ring-blue-600 rounded px-2 py-1" href="{% url 'reviews:follows' %}">Abonnements</a></li>
+            <li>
+              <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit"
+                        class="text-blue-600 font-medium focus:outline-none focus:ring-2 focus:ring-blue-600 rounded px-2 py-1">
+                  Se déconnecter
+                </button>
+              </form>
+            </li>
+          </ul>
+        </nav>
+      </aside>
+    {% endif %}
 
 
     <!-- ===== MAIN PAGE CONTENT ===== -->
     <main class="flex flex-col items-center justify-center min-h-screen">
       {% block content %}{% endblock %}
     </main>
-    <!-- Toast root that allows success/error messages with registration-->
-    <div id="toast-root" class="fixed top-4 left-1/2 -translate-x-1/2 z-50"></div>
-    <script src="{% static 'js/auth_forms.js' %}"></script>
+    <script src="{% static 'js/auth_forms.js' %}?v=20251031"></script>
+    {% if request.user.is_authenticated %}
+      <script src="{% static 'js/header_menu.js' %}"></script>
+    {% endif %}
 
   </body>
 </html>
