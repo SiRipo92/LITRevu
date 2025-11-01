@@ -6,6 +6,9 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 
+FEED_NAME = "reviews:feed"
+
+
 class RegistrationViewTests(TestCase):
     """View-level tests for the registration flow (US01)."""
 
@@ -74,7 +77,7 @@ class HomeViewTests(TestCase):
         url = reverse("home")
         resp = self.client.post(url, {"username": "gina", "password": "P@ssw0rd!!"})
         self.assertEqual(resp.status_code, 302)
-        self.assertIn(reverse("feed"), resp.url)
+        self.assertIn(reverse(FEED_NAME), resp.url)
 
 
 class HomeViewLoginTests(TestCase):
@@ -113,7 +116,7 @@ class HomeViewLoginTests(TestCase):
         resp = self.client.post(self.url, data)
         # Redirect after login
         self.assertEqual(resp.status_code, 302)
-        self.assertIn(reverse("feed"), resp.url)
+        self.assertIn(reverse(FEED_NAME), resp.url)
 
     def test_post_invalid_login_stays_on_page_with_error(self):
         """Invalid credentials re-render homepage and show error message."""
@@ -142,3 +145,75 @@ class HomeViewLoginTests(TestCase):
         session = resp.wsgi_request.session
         expiry = session.get_expiry_age()
         self.assertEqual(expiry, 1209600, f"Expected 1209600, got {expiry}")
+
+
+class LogoutFlowTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="zoe", password="StrongPassw0rd!")
+        self.home_url = reverse("home")
+        self.logout_url = reverse("logout")
+
+    def test_post_logout_redirects_home_with_logout_qs_and_logs_out(self):
+        self.client.login(username="zoe", password="StrongPassw0rd!")
+        resp = self.client.post(self.logout_url, follow=False)
+        self.assertEqual(resp.status_code, 302)
+        self.assertTrue(resp["Location"].startswith(self.home_url))
+        self.assertIn("logout=1", resp["Location"])
+
+        resp2 = self.client.get(resp["Location"])
+        self.assertEqual(resp2.status_code, 200)
+        self.assertTrue(resp2.wsgi_request.user.is_anonymous)
+
+    def test_get_logout_also_redirects_home_with_qs(self):
+        self.client.login(username="zoe", password="StrongPassw0rd!")
+        resp = self.client.get(self.logout_url, follow=False)
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn("logout=1", resp["Location"])
+
+
+class HeaderRenderingTests(TestCase):
+    def setUp(self):
+        self.home_url = reverse("home")
+        self.feed_url = reverse(FEED_NAME)
+        self.posts_url = reverse("reviews:posts")
+        self.follows_url = reverse("reviews:follows")
+
+    def test_anonymous_header_has_no_auth_nav_elements(self):
+        resp = self.client.get(self.home_url)
+        html = resp.content.decode("utf-8")
+        self.assertNotIn('id="burgerBtn"', html)
+        self.assertNotIn('id="mobileOverlay"', html)
+        self.assertNotIn('id="mobileMenu"', html)
+        self.assertIn("LITReview", html)
+
+    def test_authenticated_header_has_burger_overlay_drawer_and_nav_links(self):
+        User.objects.create_user(username="yan", password="StrongPassw0rd!")
+        self.client.login(username="yan", password="StrongPassw0rd!")
+        resp = self.client.get(self.home_url)
+        html = resp.content.decode("utf-8")
+
+        self.assertIn('id="burgerBtn"', html)
+        self.assertIn('id="mobileOverlay"', html)
+        self.assertIn('id="mobileMenu"', html)
+
+        self.assertIn(self.feed_url, html)
+        self.assertIn(self.posts_url, html)
+        self.assertIn(self.follows_url, html)
+        self.assertIn(reverse("logout"), html)
+
+
+class ReviewsAccessTests(TestCase):
+    def setUp(self):
+        self.feed_url = reverse(FEED_NAME)
+
+    def test_feed_requires_login(self):
+        resp = self.client.get(self.feed_url, follow=False)
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn(reverse("home"), resp["Location"])
+
+    def test_feed_renders_when_logged_in(self):
+        User.objects.create_user(username="kim", password="StrongPassw0rd!")
+        self.client.login(username="kim", password="StrongPassw0rd!")
+        resp = self.client.get(self.feed_url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn(b"Flux", resp.content)
