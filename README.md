@@ -4,7 +4,7 @@
 
 * **Author:** Sierra Ripoche
 * **Project:** Développez une application Web en utilisant Django — OpenClassrooms
-* **Framework:** Django 5.x
+* **Framework:** Django 5.2.7
 * **Database:** SQLite (local development)
 
 ## Overview
