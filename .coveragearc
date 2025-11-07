@@ -10,6 +10,7 @@ omit =
     */migrations/*
     LITRevu/settings.py
     LITRevu/settings/*.py
+dynamic_context = test_function
 
 [report]
 show_missing = True
