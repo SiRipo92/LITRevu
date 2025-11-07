@@ -36,8 +36,7 @@ LITRevu/                ← project root
 │   │   └── register.html
 │   ├── reviews/
 │   │   └── feed.html
-│   ├── users/
-│   │   └── index.html  ← Site UI Entry Point
+│   ├── home.html       ← Site UI Entry Point
 │   └── base.html       ← Base/root template
 │
 ├── theme/
