@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 permissions:
-  contents: write  # needed to commit flake8_report on push to main
+  contents: write
 
 jobs:
   lint:
@@ -26,34 +26,30 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install flake8 flake8-html anybadge
           pip install -r requirements.txt
-          anybadge --version || true
+          pip install flake8 flake8-html anybadge
 
-      - name: Generate fresh flake8 HTML report (non-fatal) and badge
+      - name: Generate flake8 HTML report (non-fatal) and badge
         id: lint_report
         run: |
-          # 1) Clean & recreate report dir so it never accumulates files
           rm -rf flake8_report
           mkdir -p flake8_report
 
-          # 2) Non-fatal HTML report (respects .flake8)
+          # HTML report (respects .flake8)
           flake8 . --format=html --htmldir=flake8_report || true
 
-          # 3) Strict flake8 check; capture status but don't fail the step yet
+          # Strict pass/fail for the job result:
           set +e
           flake8 .
           STATUS=$?
           set -e
 
-          # 4) Create/update badge.svg based on strict status
           if [ "$STATUS" -eq 0 ]; then
             anybadge --label "flake8" --value "passing" --color "#28a745" -f flake8_report/badge.svg
           else
             anybadge --label "flake8" --value "failing" --color "#cb2431" -f flake8_report/badge.svg
           fi
 
-          # 5) Expose status for the next step
           echo "status=$STATUS" >> $GITHUB_OUTPUT
 
       - name: Strict gate (fail job if lint errors)
@@ -63,13 +59,14 @@ jobs:
             exit 1
           fi
 
-      - name: Upload flake8 report as artifact
+      - name: Upload flake8 report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: flake8_report
           path: flake8_report/**
 
+      # CI commits for updates to flake8 report badge
       - name: Commit updated flake8 report to repo (for README badge)
         if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: |
@@ -80,8 +77,11 @@ jobs:
           git push
 
   tests:
-    name: Django tests + coverage (nose2)
+    name: Django tests + coverage
     runs-on: ubuntu-latest
+    env:
+      DJANGO_SETTINGS_MODULE: "LITRevu.settings"
+      PYTHONUNBUFFERED: "1"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -89,45 +89,23 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.14'   # or '3.11' to align with lint if you prefer
+          python-version: '3.11'
           cache: 'pip'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install coverage
 
-      - name: Run tests with coverage (nose2 via temp runner + Django test DB)
-        env:
-          PYTHONUNBUFFERED: "1"
-          DJANGO_SETTINGS_MODULE: "LITRevu.settings"
+      - name: Run tests with coverage
         run: |
           coverage erase
-
-          cat > nose2_ci_runner.py << 'PYCODE'
-          import sys
-          import django
-          from django.test.utils import setup_test_environment, teardown_test_environment
-          from django.test.runner import DiscoverRunner
-          
-          django.setup()
-          setup_test_environment()
-          runner = DiscoverRunner(verbosity=1, interactive=False)
-          old_config = runner.setup_databases()
-          try:
-              from nose2 import discover
-              code = discover()
-          finally:
-              runner.teardown_databases(old_config)
-              teardown_test_environment()
-          sys.exit(code)
-          PYCODE
-
-          coverage run nose2_ci_runner.py -v users reviews
+          # Mirror your local command exactly:
+          coverage run --branch manage.py test users reviews
           coverage report -m
           coverage xml
           coverage html
-          rm -f nose2_ci_runner.py
 
       - name: Upload coverage artifacts
         if: always()

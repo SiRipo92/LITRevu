@@ -17,7 +17,6 @@ def register(request):
             user = form.save()  # regular user; passwords hashed
             qs = urlencode({"registered": "1", "u": user.username})
             return HttpResponseRedirect(f"{reverse('home')}?{qs}")
-        # invalid → fall through and re-render with errors
     else:
         form = RegistrationForm()
 

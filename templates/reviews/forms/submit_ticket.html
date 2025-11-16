@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}
+  {% if editing %}Modifier votre ticket{% else %}Créer un ticket{% endif %}
+{% endblock %}
+
+{% block content %}
+<h1 class="text-blue-600 text-2xl font-semibold text-center w-full mb-8">
+  {% if editing %}Modifier votre ticket{% else %}Créer un ticket{% endif %}
+</h1>
+
+<form method="post" enctype="multipart/form-data"
+      class="w-full max-w-3xl mx-auto flex flex-col space-y-6 px-4">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    <!-- === Title === -->
+    <div>
+        {{ form.title.label_tag }}
+        {{ form.title }}
+        {% for error in form.title.errors %}
+          <p class="text-red-600 text-md">{{ error }}</p>
+        {% endfor %}
+    </div>
+
+    <!-- === Description === -->
+    <div>
+        {{ form.description.label_tag }}
+        {{ form.description }}
+        {% for error in form.description.errors %}
+          <p class="text-red-600 text-md">{{ error }}</p>
+        {% endfor %}
+    </div>
+
+    <!-- === Image Upload (Custom Button) === -->
+    <div id="image-upload-section">
+        <label class="block text-md mb-2">Image</label>
+
+        {% if editing and form.instance.image %}
+          <!-- Existing image preview ABOVE buttons -->
+          <div id="current-image" class="mb-4">
+              <img src="{{ form.instance.image.url }}" alt="Image actuelle"
+                   class="max-h-64 rounded border mb-2">
+          </div>
+        {% endif %}
+
+        <div class="flex items-center gap-4 flex-wrap">
+            <!-- Hidden file input -->
+            <input id="id_image" name="image" type="file"
+                   accept="image/*"
+                   class="hidden">
+
+            <!-- Styled upload label as button -->
+            <label for="id_image"
+                   id="upload-label"
+                   class="inline-block bg-blue-600 text-white px-5 py-2 rounded cursor-pointer hover:bg-blue-700 transition">
+                Télécharger un fichier
+            </label>
+
+            <!-- Delete button (hidden until file is uploaded or image exists) -->
+            <button type="button"
+                    id="remove-file"
+                    class="hidden bg-red-600 text-white px-5 py-2 rounded hover:bg-red-700 transition">
+                Supprimer l’image
+            </button>
+
+            <!-- Hidden input for delete flag -->
+            <input type="hidden" name="delete_existing_image" id="delete_existing_image" value="false">
+        </div>
+
+        <!-- File info -->
+        <div id="file-info" class="mt-2 hidden">
+            <p id="file-name" class="text-gray-800"></p>
+        </div>
+
+        {% for error in form.image.errors %}
+          <p class="text-red-600 text-sm">{{ error }}</p>
+        {% endfor %}
+    </div>
+
+    <!-- === Submit Button === -->
+    <div class="flex justify-end">
+        <button type="submit"
+                class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition">
+            Envoyer
+        </button>
+    </div>
+</form>
+
+{% load static %}
+<script src="{% static 'js/ticket_form.js' %}"></script>
+
+{% endblock %}

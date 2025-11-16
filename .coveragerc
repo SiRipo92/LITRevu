@@ -4,17 +4,24 @@ branch = True
 source =
     users
     reviews
-    tests
 # Paths to exclude entirely
 omit =
     */migrations/*
     LITRevu/settings.py
     LITRevu/settings/*.py
+    */tests/*
+    manage.py
 dynamic_context = test_function
 
 [report]
 show_missing = True
 skip_empty = True
+omit =
+    */migrations/*
+    */tests/*
+    manage.py
+    LITRevu/settings.py
+    LITRevu/settings/*.py
 
 [html]
 directory = htmlcov
