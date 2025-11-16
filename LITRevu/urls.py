@@ -18,6 +18,8 @@ from django.contrib import admin
 from django.urls import path, include
 from LITRevu.views import home
 from users.views import logout_view
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -26,11 +28,15 @@ urlpatterns = [
     path("", home, name="home"),
 
     # Users-related routes (registration, etc.)
-    path("users/", include("users.urls")),
+    path("users/", include("users.urls", namespace="users")),
 
     # Reviews area (authenticated area)
-    path("flux/", include(("reviews.urls", "reviews"), namespace="reviews")),
+    path("flux/", include("reviews.urls", namespace="reviews")),
 
     # Logout endpoint (POST form submits here)
     path("logout/", logout_view, name="logout"),
 ]
+
+# 👇 Add this block at the end
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

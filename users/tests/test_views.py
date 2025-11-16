@@ -1,7 +1,6 @@
 from django.test import TestCase
 from django.urls import reverse
-from django.contrib.auth import get_user_model
-
+from django.contrib.auth import get_user_model, SESSION_KEY
 
 User = get_user_model()
 
@@ -15,7 +14,7 @@ class RegistrationViewTests(TestCase):
     def test_register_get_renders_form(self):
         """GET /register/ renders the registration page with required fields."""
 
-        url = reverse("register")
+        url = reverse("users:register")
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, "Inscrivez-vous")
@@ -26,7 +25,7 @@ class RegistrationViewTests(TestCase):
     def test_register_post_success_redirects_with_qs(self):
         """POST valid data to /register/ creates a user and redirects to home with query params."""
 
-        url = reverse("register")
+        url = reverse("users:register")
         data = {
             "username": "eve",
             "password1": "StrongPassw0rd!",
@@ -43,7 +42,7 @@ class RegistrationViewTests(TestCase):
     def test_register_post_invalid_shows_errors(self):
         """POST invalid data re-renders the form with field errors; no user is created."""
 
-        url = reverse("register")
+        url = reverse("users:register")
         data = {
             "username": "frank",
             "password1": "Mismatch123!",
@@ -66,6 +65,60 @@ class RegistrationViewTests(TestCase):
 
         # No user created
         self.assertFalse(User.objects.filter(username="frank").exists())
+
+    def test_register_get_renders_template(self):
+        resp = self.client.get(reverse("users:register"))
+        self.assertEqual(resp.status_code, 200)
+        self.assertTemplateUsed(resp, "registration/register.html")
+        self.assertIn("form", resp.context)
+
+    def test_register_post_valid_redirects_with_querystring(self):
+        resp = self.client.post(
+            reverse("users:register"),
+            data={
+                "username": "charlie",
+                "password1": "StrongPassw0rd!",
+                "password2": "StrongPassw0rd!",
+            },
+            follow=False,
+        )
+        self.assertEqual(resp.status_code, 302)
+        # /?registered=1&u=charlie
+        self.assertIn("?registered=1&u=charlie", resp.headers["Location"])
+
+        # user actually created
+        self.assertTrue(User.objects.filter(username="charlie").exists())
+
+    def test_register_post_invalid_stays_on_page_and_shows_form(self):
+        # password mismatch → invalid branch
+        resp = self.client.post(
+            reverse("users:register"),
+            data={
+                "username": "dana",
+                "password1": "StrongPassw0rd!",
+                "password2": "NotTheSame123!",
+            },
+            follow=True,
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertTemplateUsed(resp, "registration/register.html")
+        self.assertIn("form", resp.context)
+        self.assertFalse(User.objects.filter(username="dana").exists())
+
+    def test_register_post_duplicate_username_is_invalid(self):
+        User.objects.create_user(username="alex", password="x")
+        resp = self.client.post(
+            reverse("users:register"),
+            data={
+                "username": "alex",  # already taken
+                "password1": "StrongPassw0rd!",
+                "password2": "StrongPassw0rd!",
+            },
+            follow=True,
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertTemplateUsed(resp, "registration/register.html")
+        self.assertIn("form", resp.context)
 
 
 class HomeViewTests(TestCase):

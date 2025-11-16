@@ -7,11 +7,35 @@ class Ticket(models.Model):
     """
     Placeholder for content a user wants to review.
 
-   Extend this model later with fields like `title`, `description`, `image`,
-   `time_created`, etc.
+   Fields:
+    - title: Required name of the ticket to be created
+    - description: Optional description of the ticket
+    - user: Author of the ticket
+    - image: Optional image associated to the ticket
+    - time_created: Auto timestamp for when the ticket is created
    """
-    # Your Ticket model definition goes here
-    pass
+    # Defines the data for a Ticket
+    title = models.CharField(max_length=128)
+    description = models.TextField(max_length=2048, blank=True)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="tickets",
+    )
+    image = models.ImageField(
+        upload_to="ticket_images/",
+        blank=True,
+        null=True,
+    )
+    time_created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Ticket"
+        verbose_name_plural = "Tickets"
+        ordering = ['-time_created']
+
+    def __str__(self):
+        return f"{self.title} (par {self.user.username})"
 
 
 class Review(models.Model):
@@ -58,6 +82,8 @@ class UserFollows(models.Model):
     class Meta:
         """Enforce uniqueness of a (follower, followed) pair."""
         unique_together = ("user", "followed_user")
+        verbose_name = "User Follow"
+        verbose_name_plural = "User Follows"
 
     def __str__(self):
         """Readable representation: '<user> follows <followed_user>'."""
