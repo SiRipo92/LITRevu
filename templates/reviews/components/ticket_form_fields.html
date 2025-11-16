@@ -1,0 +1,52 @@
+{# Fields for Ticket (title, description, image). Expects: ticket_form, editing (bool) #}
+
+<div class="my-4">
+  {{ ticket_form.title.label_tag }}
+  {{ ticket_form.title }}
+  {% for error in ticket_form.title.errors %}
+    <p class="text-red-600 text-md">{{ error }}</p>
+  {% endfor %}
+</div>
+
+<div>
+  {{ ticket_form.description.label_tag }}
+  {{ ticket_form.description }}
+  {% for error in ticket_form.description.errors %}
+    <p class="text-red-600 text-md">{{ error }}</p>
+  {% endfor %}
+</div>
+
+<div data-image-upload-section class="mt-4">
+  <label class="block mb-2">Image</label>
+
+  {% if editing and ticket_form.instance.image %}
+    <div data-current-image class="mb-4">
+      <img src="{{ ticket_form.instance.image.url }}" alt="Image actuelle" class="max-h-64 rounded border mb-2">
+    </div>
+  {% endif %}
+
+  <div class="flex items-center gap-4 flex-wrap">
+    {# Render the real file input exactly as Django builds it (has a stable id) #}
+    {{ ticket_form.image }}
+
+    <label data-upload-label
+           class="inline-block bg-blue-600 text-white px-5 py-2 rounded cursor-pointer hover:bg-blue-700 transition">
+      Télécharger un fichier
+    </label>
+
+    <button type="button" data-remove-file
+            class="hidden bg-red-600 text-white px-5 py-2 rounded hover:bg-red-700 transition">
+      Supprimer l’image
+    </button>
+
+    <input type="hidden" name="delete_existing_image" data-delete-flag value="false">
+  </div>
+
+  <div data-file-info class="mt-2 hidden">
+    <p data-file-name class="text-gray-800"></p>
+  </div>
+
+  {% for error in ticket_form.image.errors %}
+    <p class="text-red-600 text-sm">{{ error }}</p>
+  {% endfor %}
+</div>
