@@ -33,7 +33,6 @@ def make_image_file(name="test.jpg", fmt="JPEG", size=(8, 8), color=(255, 0, 0))
 class TicketViewsTests(TestCase):
     """End-to-end view tests covering the ticket CRUD pages and related listings."""
 
-
     @classmethod
     def setUpTestData(cls):
         """Create two users shared by all tests."""

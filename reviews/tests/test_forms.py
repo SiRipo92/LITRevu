@@ -6,7 +6,6 @@ from reviews.forms import CreateTicketForm
 class CreateTicketFormTests(TestCase):
     """Unit tests validating the behavior and presentation of CreateTicketForm."""
 
-
     def test_valid_without_image(self):
         """Form is valid when only title and description are provided (no image)."""
         form = CreateTicketForm(data={"title": "A title", "description": "desc"})

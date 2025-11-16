@@ -16,7 +16,6 @@ class TicketModelTests(TestCase):
         used by templates/JS (CSS classes, id, accept, etc.).
     """
 
-
     def test_str_includes_title_and_username(self):
         """
         GIVEN a complete payload without an image
