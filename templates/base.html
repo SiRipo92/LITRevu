@@ -143,6 +143,8 @@
     <main class="flex flex-col items-center justify-center min-h-screen">
       {% block content %}{% endblock %}
     </main>
+
+    <footer class="h-[100px]"></footer>
     <script src="{% static 'js/auth_forms.js' %}?v=20251031"></script>
     {% if request.user.is_authenticated %}
       <script src="{% static 'js/header_menu.js' %}"></script>

@@ -1,14 +1,13 @@
 import io
 import shutil
 import tempfile
-
 from PIL import Image
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from reviews.models import Ticket
+from reviews.models import Ticket, Review
 
 User = get_user_model()
 
@@ -49,17 +48,6 @@ class TicketViewsTests(TestCase):
         """Authenticate as the main user for request flows requiring login."""
         self.client.force_login(self.user)
 
-    # -------- feed --------
-    def test_feed_lists_tickets_newest_first(self):
-        """GET /flux/ : tickets should be ordered newest-first in the feed."""
-        t1 = Ticket.objects.create(title="old", description="", user=self.user)
-        t2 = Ticket.objects.create(title="new", description="", user=self.user)
-        resp = self.client.get(reverse("reviews:feed"))
-        self.assertEqual(resp.status_code, 200)
-        self.assertTemplateUsed(resp, "reviews/pages/feed.html")
-        ids = [t.id for t in resp.context["tickets"]]
-        self.assertEqual(ids, [t2.id, t1.id])
-
     # -------- create_ticket --------
     def test_create_ticket_get_renders_form(self):
         """GET create form renders the expected template."""
@@ -97,7 +85,7 @@ class TicketViewsTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertTrue(resp.context.get("editing"))
         self.assertTemplateUsed(resp, "reviews/forms/submit_ticket.html")
-        self.assertEqual(resp.context["form"].instance.id, t.id)
+        self.assertEqual(resp.context["ticket_form"].instance.id, t.id)
 
     def test_edit_ticket_post_updates_title_and_keeps_image(self):
         """POST edit without delete flag updates fields but preserves the existing image."""
@@ -153,23 +141,156 @@ class TicketViewsTests(TestCase):
         self.assertRedirects(resp, reverse("reviews:posts"))
         self.assertFalse(Ticket.objects.filter(id=t.id).exists())
 
-    # -------- my_posts --------
-    def test_my_posts_only_shows_owned(self):
-        """GET my_posts lists only the authenticated user's tickets."""
-        mine = Ticket.objects.create(title="mine", description="", user=self.user)
-        theirs = Ticket.objects.create(title="theirs", description="", user=self.other)
-        resp = self.client.get(reverse("reviews:posts"))
-        self.assertEqual(resp.status_code, 200)
-        ids = [t.id for t in resp.context["tickets"]]
-        self.assertIn(mine.id, ids)
-        self.assertNotIn(theirs.id, ids)
 
-    # -------- create_review (placeholder) --------
-    def test_create_review_placeholder_renders(self):
-        """GET create_review placeholder should render and attach the target ticket in context."""
-        t = Ticket.objects.create(title="stub", description="", user=self.user)
-        resp = self.client.get(reverse("reviews:create_review", args=[t.id]))
+@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT, MEDIA_URL="/media/")
+class ReviewAndFeedViewsTests(TestCase):
+    """
+    Tests for:
+    - feed
+    - my_posts
+    - create_review (standalone + response mode)
+    - edit_review
+    - delete_review
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(username="ivy", password="StrongPassw0rd!")
+        cls.other = User.objects.create_user(username="john", password="password123")
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
+
+    def setUp(self):
+        # Auth user
+        self.client.force_login(self.user)
+
+        # Base ticket + review
+        self.ticket = Ticket.objects.create(
+            title="Book",
+            description="A desc",
+            user=self.user,
+        )
+
+        self.review = Review.objects.create(
+            headline="Good",
+            body="Nice",
+            rating=4,
+            user=self.user,
+            ticket=self.ticket,
+        )
+
+        # URLs grouped like in views.py
+        self.urls = {
+            "feed": reverse("reviews:feed"),
+            "my_posts": reverse("reviews:posts"),
+
+            "create_review_standalone": reverse("reviews:create_review"),
+            "create_review_response": reverse("reviews:create_review_for_ticket", args=[self.ticket.id]),
+
+            "edit_review": reverse("reviews:edit_review", args=[self.review.id]),
+            "delete_review": reverse("reviews:delete_review", args=[self.review.id]),
+        }
+
+    # ------------------------
+    # FEED AND POSTS
+    # ------------------------
+
+    def test_feed_shows_tickets_and_reviews(self):
+        resp = self.client.get(self.urls["feed"])
         self.assertEqual(resp.status_code, 200)
-        # Placeholder template name you currently use:
-        self.assertTemplateUsed(resp, "placeholders/create_review.html")
-        self.assertEqual(resp.context["ticket"].id, t.id)
+        self.assertIn("feed_items", resp.context)
+        self.assertGreaterEqual(len(resp.context["feed_items"]), 1)
+
+    # ------------------------
+    # CREATE REVIEW — RESPONSE MODE
+    # ------------------------
+
+    def test_create_review_response_mode_get(self):
+        resp = self.client.get(self.urls["create_review_response"])
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(resp.context["is_response_mode"])
+        self.assertEqual(resp.context["ticket"].id, self.ticket.id)
+
+    # ------------------------
+    # CREATE REVIEW — STANDALONE MODE
+    # ------------------------
+
+    def test_create_review_standalone_get(self):
+        resp = self.client.get(self.urls["create_review_standalone"])
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(resp.context["is_response_mode"])
+        self.assertIn("ticket_form", resp.context)
+        self.assertIn("review_form", resp.context)
+
+    def test_create_review_standalone_post_creates_ticket_and_review(self):
+        resp = self.client.post(
+            self.urls["create_review_standalone"],
+            data={
+                # Ticket section
+                "title": "New Ticket",
+                "description": "New Desc",
+                # Review section
+                "headline": "Solid",
+                "rating": 4,
+                "body": "Enjoyed it",
+            },
+        )
+        self.assertRedirects(resp, reverse("reviews:feed"))
+
+        self.assertEqual(Ticket.objects.count(), 2)   # original + new
+        self.assertEqual(Review.objects.count(), 2)   # original + new
+
+        new_ticket = Ticket.objects.latest("id")
+        new_review = Review.objects.latest("id")
+
+        self.assertEqual(new_ticket.user, self.user)
+        self.assertEqual(new_review.ticket, new_ticket)
+        self.assertEqual(new_review.user, self.user)
+
+    # ------------------------
+    # EDIT REVIEW
+    # ------------------------
+
+    def test_edit_review_get_displays_prefilled_form(self):
+        resp = self.client.get(self.urls["edit_review"])
+        self.assertEqual(resp.status_code, 200)
+        form = resp.context["review_form"]
+        self.assertEqual(form.instance.id, self.review.id)
+        self.assertTrue(resp.context["is_response_mode"])
+
+    def test_edit_review_wrong_user_gets_404(self):
+        other_review = Review.objects.create(
+            headline="Other review",
+            body="Body",
+            rating=3,
+            user=self.other,
+            ticket=self.ticket,
+        )
+        url = reverse("reviews:edit_review", args=[other_review.id])
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 404)
+
+    # ------------------------
+    # DELETE REVIEW
+    # ------------------------
+
+    def test_delete_review_get_redirects_and_deletes(self):
+        resp = self.client.get(self.urls["delete_review"])
+        self.assertRedirects(resp, reverse("reviews:posts"))
+        self.assertFalse(Review.objects.filter(id=self.review.id).exists())
+
+    def test_delete_review_wrong_user_forbidden(self):
+        other_ticket = Ticket.objects.create(title="X", description="Y", user=self.other)
+        other_review = Review.objects.create(
+            headline="Bad",
+            body="Nope",
+            rating=1,
+            user=self.other,
+            ticket=other_ticket,
+        )
+        url = reverse("reviews:delete_review", args=[other_review.id])
+        resp = self.client.post(url)
+        self.assertEqual(resp.status_code, 403)

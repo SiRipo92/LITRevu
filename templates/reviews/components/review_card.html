@@ -1,0 +1,43 @@
+{# Reusable review card. Expects: review, request; optionally: show_ticket=True #}
+<article class="border rounded-lg p-6 shadow-sm bg-gray-50">
+  <div class="flex justify-between text-sm text-gray-600 mb-2">
+    <p>
+      {% if review.user_id == request.user.id %}
+        Vous avez publié une critique
+      {% else %}
+        {{ review.user.username }} a publié une critique
+      {% endif %}
+    </p>
+    <p>{{ review.time_created|date:"H:i, d F Y" }}</p>
+  </div>
+
+  <h3 class="text-lg font-semibold text-gray-900 mb-1">
+    {{ review.headline }}
+    {% include "reviews/components/stars.html" with value=review.rating only %}
+  </h3>
+
+  {% if review.body %}
+    <p class="text-gray-800 mb-3">{{ review.body }}</p>
+  {% endif %}
+
+  {% if show_ticket %}
+    <div class="mt-4 border rounded p-4">
+      <p class="text-sm text-gray-600 mb-2">En réponse à :</p>
+      {% include "reviews/components/ticket_card.html" with ticket=review.ticket request=request show_actions=False only %}
+    </div>
+  {% endif %}
+
+  {# Buttons only on "Mes Posts" (allow_edit_delete=True) #}
+  {% if allow_edit_delete %}
+    <div class="flex justify-end mt-4 gap-4">
+        <a href="{% url 'reviews:edit_review' review.id %}"
+           class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+            Modifier
+        </a>
+        <a href="{% url 'reviews:delete_review' review.id %}"
+           class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition">
+            Supprimer
+        </a>
+    </div>
+    {% endif %}
+</article>

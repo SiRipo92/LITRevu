@@ -1,58 +1,27 @@
 {% extends "base.html" %}
+{% load card_tags %}
+
 {% block title %}Flux{% endblock %}
 
 {% block content %}
 <h1 class="hidden">Flux</h1>
 
-<div class="flux-btns__container flex flex-col md:flex-row justify-between gap-6 mb-10">
-    <a href="{% url 'reviews:create_ticket' %}" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition">
-        Demander une critique
-    </a>
-    <button class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition">
-        Créer une critique
-    </button>
+<div class="flux-btns__container flex flex-col md:flex-row justify-between gap-6 my-10">
+  <a href="{% url 'reviews:create_ticket' %}"
+     class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 md:min-w-[220px] text-center transition">
+    Demander une critique
+  </a>
+  <a href="{% url 'reviews:create_review' %}"
+     class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 md:min-w-[220px] text-center transition">
+    Créer une critique
+  </a>
 </div>
 
-<!-- === Ticket cards === -->
-<div class="space-y-8">
-  {% for ticket in tickets %}
-  <article class="border rounded-lg p-6 shadow-sm bg-white">
-    <!-- Header: username + timestamp -->
-    <div class="flex justify-between text-sm text-gray-600 mb-2">
-      <p>
-        {% if ticket.user == request.user %}
-          Vous avez demandé une critique
-        {% else %}
-          {{ ticket.user.username }} a demandé une critique
-        {% endif %}
-      </p>
-      <p>{{ ticket.time_created|date:"H:i, d F Y" }}</p>
-    </div>
+<div class="space-y-8 w-[90%] xl:w-[70%]">
+  {% for item in feed_items %}
 
-    <!-- Title -->
-    <h2 class="text-md font-semibold text-gray-900 mb-2">{{ ticket.title }}</h2>
+    {% render_card_grid item %}
 
-    <!-- Description -->
-    {% if ticket.description %}
-      <p class="text-gray-800 mb-4">{{ ticket.description }}</p>
-    {% endif %}
-
-    <!-- Image -->
-    {% if ticket.image %}
-      <div class="mt-2">
-        <img src="{{ ticket.image.url }}" alt="Image associée" class="max-h-64 rounded">
-      </div>
-    {% endif %}
-
-    <div class="flex justify-end mt-4">
-        <a href="{% url 'reviews:create_review' ticket.id %}" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition">
-            Créer une critique
-        </a>
-    </div>
-
-  </article>
-  {% empty %}
-    <p class="text-gray-500">Aucun ticket n’a encore été publié.</p>
   {% endfor %}
 </div>
 {% endblock %}

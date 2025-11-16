@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Créer une critique{% endblock %}
+
+{% block content %}
+<h1 class="text-blue-600 text-2xl font-semibold text-center w-full my-8">Créer une critique</h1>
+
+<form method="post" enctype="multipart/form-data" class="w-full max-w-3xl mx-auto flex flex-col space-y-0 px-4">
+  {% csrf_token %}
+
+  {% if ticket %}
+    <section class="border rounded-lg p-6 bg-white">
+      <h2 class="text-lg font-semibold">Vous êtes en train de poster en réponse à</h2>
+      <div class="p-4">
+        {% include "reviews/components/ticket_card.html" with ticket=ticket request=request show_actions=False only %}
+      </div>
+    </section>
+
+    <section class="border border-t-0 rounded-b-lg rounded-t-none p-6 bg-white">
+      <h2 class="text-lg font-semibold">Critique</h2>
+      {% include "reviews/components/review_form_fields.html" with review_form=review_form %}
+      <div class="flex justify-end">
+        <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition">Envoyer</button>
+      </div>
+    </section>
+
+  {% else %}
+    <section class="border rounded-t-lg p-6 bg-white">
+      <h2 class="text-lg font-semibold">Livre / Article</h2>
+      {% include "reviews/components/ticket_form_fields.html" with ticket_form=ticket_form editing=False %}
+    </section>
+
+    <section class="border border-t-0 rounded-b-lg rounded-t-none p-6 bg-white space-y-4">
+      <h2 class="text-lg font-semibold">Critique</h2>
+      {% include "reviews/components/review_form_fields.html" with review_form=review_form %}
+      <div class="flex justify-end">
+        <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition">Envoyer</button>
+      </div>
+    </section>
+  {% endif %}
+</form>
+
+
+{% load static %}
+<script src="{% static 'js/ticket_form.js' %}"></script>
+
+{% endblock %}

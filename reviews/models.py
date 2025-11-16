@@ -1,6 +1,7 @@
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.conf import settings
 from django.db import models
+from django.db.models import UniqueConstraint
 
 
 class Ticket(models.Model):
@@ -29,6 +30,11 @@ class Ticket(models.Model):
     )
     time_created = models.DateTimeField(auto_now_add=True)
 
+    @property
+    def display_title(self) -> str:
+        """Title used in the feed."""
+        return self.title
+
     class Meta:
         verbose_name = "Ticket"
         verbose_name_plural = "Tickets"
@@ -40,7 +46,9 @@ class Ticket(models.Model):
 
 class Review(models.Model):
     """
-    A review for a given ticket, authored by a user.
+    A user's critique of a book/article. If posted in response to a
+    Ticket, the (ticket, user) pair must be unique so each user can
+    only review a given ticket once.
 
     Fields:
         ticket: ForeignKey to the Ticket being reviewed.
@@ -59,6 +67,22 @@ class Review(models.Model):
     user = models.ForeignKey(
         to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     time_created = models.DateTimeField(auto_now_add=True)
+
+    @property
+    def display_title(self) -> str:
+        """Title used in the feed."""
+        return self.headline
+
+    class Meta:
+        verbose_name = "Review"
+        verbose_name_plural = "Reviews"
+        ordering = ['-id']
+        constraints = [
+            UniqueConstraint(fields=['user', 'ticket'], name='unique_review_per_user_ticket')
+        ]
+
+    def __str__(self):
+        return f"{self.headline} — {self.user}"
 
 
 class UserFollows(models.Model):

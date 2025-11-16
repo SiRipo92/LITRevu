@@ -1,0 +1,40 @@
+{# Fields for Review (headline, rating, body). Expects: review_form #}
+
+{# Headline #}
+<div>
+  <label class="block mb-4">{{ review_form.headline.label }}</label>
+  {{ review_form.headline }}
+  {% for error in review_form.headline.errors %}
+    <p class="text-red-600 text-md">{{ error }}</p>
+  {% endfor %}
+</div>
+
+{# Rating #}
+<div>
+  <fieldset class="my-4">
+    <legend class="block mb-2">Note</legend>
+
+    {# Add review-rating to scope the custom CSS #}
+    <div class="review-rating w-full ml-4 flex flex-nowrap justify-start gap-8">
+      {% for sub in review_form.rating %}
+        <label class="inline-flex items-center gap-2">
+          {{ sub.tag }}
+          <span class="whitespace-nowrap">{{ sub.choice_label }}</span>
+        </label>
+      {% endfor %}
+    </div>
+  </fieldset>
+
+  {% for error in review_form.rating.errors %}
+    <p class="text-red-600 text-md">{{ error }}</p>
+  {% endfor %}
+</div>
+
+{# Body #}
+<div>
+  <label class="block mb-4">{{ review_form.body.label }}</label>
+  {{ review_form.body }}
+  {% for error in review_form.body.errors %}
+    <p class="text-red-600 text-md">{{ error }}</p>
+  {% endfor %}
+</div>
