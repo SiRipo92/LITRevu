@@ -31,21 +31,27 @@ def make_image_file(name="test.jpg", fmt="JPEG", size=(8, 8), color=(255, 0, 0))
 
 @override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT, MEDIA_URL="/media/")
 class TicketViewsTests(TestCase):
+    """End-to-end view tests covering the ticket CRUD pages and related listings."""
+
     @classmethod
     def setUpTestData(cls):
+        """Create two users shared by all tests."""
         cls.user = User.objects.create_user(username="alice", password="pass12345")
         cls.other = User.objects.create_user(username="bob", password="pass12345")
 
     @classmethod
     def tearDownClass(cls):
+        """Remove the temporary MEDIA directory created for this module."""
         super().tearDownClass()
         shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
     def setUp(self):
+        """Authenticate as the main user for request flows requiring login."""
         self.client.force_login(self.user)
 
     # -------- feed --------
     def test_feed_lists_tickets_newest_first(self):
+        """GET /flux/ : tickets should be ordered newest-first in the feed."""
         t1 = Ticket.objects.create(title="old", description="", user=self.user)
         t2 = Ticket.objects.create(title="new", description="", user=self.user)
         resp = self.client.get(reverse("reviews:feed"))
@@ -56,11 +62,13 @@ class TicketViewsTests(TestCase):
 
     # -------- create_ticket --------
     def test_create_ticket_get_renders_form(self):
+        """GET create form renders the expected template."""
         resp = self.client.get(reverse("reviews:create_ticket"))
         self.assertEqual(resp.status_code, 200)
         self.assertTemplateUsed(resp, "reviews/forms/submit_ticket.html")
 
     def test_create_ticket_post_creates_and_redirects(self):
+        """Valid POST creates a ticket then redirects to the feed."""
         resp = self.client.post(
             reverse("reviews:create_ticket"),
             data={"title": "Via view", "description": "body"},
@@ -71,7 +79,7 @@ class TicketViewsTests(TestCase):
         self.assertTrue(Ticket.objects.filter(title="Via view", user=self.user).exists())
 
     def test_create_ticket_invalid_keeps_form(self):
-        # Missing title -> invalid
+        """Invalid POST (missing title) re-renders the form with errors."""
         resp = self.client.post(
             reverse("reviews:create_ticket"),
             data={"title": "", "description": "no title"},
@@ -83,6 +91,7 @@ class TicketViewsTests(TestCase):
 
     # -------- edit_ticket --------
     def test_edit_ticket_get_prefills_and_sets_editing_flag(self):
+        """GET edit page should prefill the form and expose an 'editing' flag in context."""
         t = Ticket.objects.create(title="T", description="D", user=self.user)
         resp = self.client.get(reverse("reviews:edit_ticket", args=[t.id]))
         self.assertEqual(resp.status_code, 200)
@@ -91,6 +100,7 @@ class TicketViewsTests(TestCase):
         self.assertEqual(resp.context["form"].instance.id, t.id)
 
     def test_edit_ticket_post_updates_title_and_keeps_image(self):
+        """POST edit without delete flag updates fields but preserves the existing image."""
         t = Ticket.objects.create(title="Old", description="", user=self.user)
         # First attach an image
         self.client.post(
@@ -114,6 +124,7 @@ class TicketViewsTests(TestCase):
         self.assertTrue(bool(t.image))
 
     def test_edit_ticket_post_can_remove_existing_image(self):
+        """POST edit with delete_existing_image removes the image and redirects."""
         t = Ticket.objects.create(
             title="With Img", description="", user=self.user, image=make_image_file()
         )
@@ -128,12 +139,14 @@ class TicketViewsTests(TestCase):
         self.assertFalse(bool(t.image))
 
     def test_edit_ticket_404_for_non_owner(self):
+        """Non-owners should get 404 when attempting to edit someone else's ticket."""
         t = Ticket.objects.create(title="Not yours", description="", user=self.other)
         resp = self.client.get(reverse("reviews:edit_ticket", args=[t.id]))
         self.assertEqual(resp.status_code, 404)
 
     # -------- delete_ticket --------
     def test_delete_ticket_removes_and_redirects(self):
+        """POST delete removes the ticket and redirects to 'posts'."""
         t = Ticket.objects.create(title="Delete me", description="", user=self.user)
         resp = self.client.post(reverse("reviews:delete_ticket", args=[t.id]))
         self.assertEqual(resp.status_code, 302)
@@ -142,6 +155,7 @@ class TicketViewsTests(TestCase):
 
     # -------- my_posts --------
     def test_my_posts_only_shows_owned(self):
+        """GET my_posts lists only the authenticated user's tickets."""
         mine = Ticket.objects.create(title="mine", description="", user=self.user)
         theirs = Ticket.objects.create(title="theirs", description="", user=self.other)
         resp = self.client.get(reverse("reviews:posts"))
@@ -152,6 +166,7 @@ class TicketViewsTests(TestCase):
 
     # -------- create_review (placeholder) --------
     def test_create_review_placeholder_renders(self):
+        """GET create_review placeholder should render and attach the target ticket in context."""
         t = Ticket.objects.create(title="stub", description="", user=self.user)
         resp = self.client.get(reverse("reviews:create_review", args=[t.id]))
         self.assertEqual(resp.status_code, 200)

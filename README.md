@@ -122,34 +122,6 @@ pip install -r requirements.txt
        python manage.py tailwind start
        ```
 
-## User Stories
-+ User Story 1 – Authentication 
-
-As a visitor, I can create an account and log in so that I can access the application’s features.
-
-+ User Story 2 – Ticket Creation
-
-As a logged-in user, I can create a ticket requesting a review for a book or article.
-
-+ User Story 3 – Review Creation
-
-As a logged-in user, I can post a review either in response to a ticket or independently.
-
-+ User Story 4 – Feed Display
-
-As a logged-in user, I can view a feed showing all tickets and reviews from users I follow, ordered by date.
-
-+ User Story 5 – Following System
-
-As a logged-in user, I can follow or unfollow other users to customize my feed.
-
-+ User Story 6 – CRUD Operations
-
-As a logged-in user, I can edit or delete my own tickets and reviews.
-
-+ User Story 7 – Accessibility & Design
-
-As a user with accessibility needs, I can navigate the application easily following WCAG 2.1 guidelines.
 
 ## 🧑‍💻 Development Notes
 
