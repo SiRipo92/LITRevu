@@ -1,16 +1,9 @@
 @import "tailwindcss";
 @plugin "daisyui";
 
-/**
-  * A catch-all path to Django template files, JavaScript, and Python files
-  * that contain Tailwind CSS classes and will be scanned by Tailwind to generate the final CSS file.
-  *
-  * If your final CSS file is not being updated after code changes, you may want to broaden or narrow
-  * the scope of this path.
-  */
 @source "../../../**/*.{html,py,js}";
 
-/* Scope to the review rating only so we don't affect all radios everywhere */
+/* Change default radio styles for 'Ratings' in Review form */
 .review-rating input[type="radio"] {
   /* remove native look */
   -webkit-appearance: none;
