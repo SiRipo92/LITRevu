@@ -67,12 +67,12 @@
                       md:text-[.75rem] lg:text-[0.9rem] xl:text-base">
               Flux
             </a>
-            <a href="{% url 'reviews:posts' %}"
+            <a href="{% url 'users:my_posts' %}"
                class="hover:underline focus:outline-none focus:ring-2 focus:ring-white rounded px-1
                       md:text-[.75rem] lg:text-[0.9rem] xl:text-base">
               Posts
             </a>
-            <a href="{% url 'reviews:follows' %}"
+            <a href="{% url 'users:my_follows' %}"
                class="hover:underline focus:outline-none focus:ring-2 focus:ring-white rounded px-1
                       md:text-[.75rem] lg:text-[0.9rem] xl:text-base">
               Abonnements
@@ -122,8 +122,8 @@
              role="navigation" aria-label="Navigation mobile">
           <ul class="flex flex-col gap-4">
             <li><a class="text-blue-600 font-medium focus:outline-none focus:ring-2 focus:ring-blue-600 rounded px-2 py-1" href="{% url 'reviews:feed' %}">Flux</a></li>
-            <li><a class="text-blue-600 font-medium focus:outline-none focus:ring-2 focus:ring-blue-600 rounded px-2 py-1" href="{% url 'reviews:posts' %}">Posts</a></li>
-            <li><a class="text-blue-600 font-medium focus:outline-none focus:ring-2 focus:ring-blue-600 rounded px-2 py-1" href="{% url 'reviews:follows' %}">Abonnements</a></li>
+            <li><a class="text-blue-600 font-medium focus:outline-none focus:ring-2 focus:ring-blue-600 rounded px-2 py-1" href="{% url 'users:my_posts' %}">Posts</a></li>
+            <li><a class="text-blue-600 font-medium focus:outline-none focus:ring-2 focus:ring-blue-600 rounded px-2 py-1" href="{% url 'users:my_follows' %}">Abonnements</a></li>
             <li>
               <form method="post" action="{% url 'logout' %}">
                 {% csrf_token %}
@@ -145,10 +145,21 @@
     </main>
 
     <footer class="h-[100px]"></footer>
+    <script src="{% static 'js/toast.js' %}"></script>
     <script src="{% static 'js/auth_forms.js' %}?v=20251031"></script>
     {% if request.user.is_authenticated %}
       <script src="{% static 'js/header_menu.js' %}"></script>
     {% endif %}
 
+    {% if request.user.is_staff %}
+    <!-- Breakpoint debug overlay (development only for logged in Super User [ADMIN]) -->
+    <div class="fixed bottom-2 right-2 text-xs bg-black/70 text-white px-2 py-1 rounded z-50 pointer-events-none">
+      <span class="block sm:hidden">base</span>
+      <span class="hidden sm:block md:hidden">sm</span>
+      <span class="hidden md:block lg:hidden">md</span>
+      <span class="hidden lg:block xl:hidden">lg</span>
+      <span class="hidden xl:block">xl</span>
+    </div>
+  {% endif %}
   </body>
 </html>
