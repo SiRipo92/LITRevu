@@ -17,8 +17,4 @@ urlpatterns = [
     path("critique/creer/<int:ticket_id>/", views.create_review, name="create_review_for_ticket"),
     path("critique/modifier/<int:review_id>/", views.edit_review, name="edit_review"),
     path("critique/supprimer/<int:review_id>/", views.delete_review, name="delete_review"),
-
-    # Page display for user related posts and followers
-    path("mes-posts/", views.my_posts, name="posts"),
-    path("abonnements/", views.follows_placeholder, name="follows"),
 ]

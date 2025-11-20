@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Ticket, Review, UserFollows
+from .models import Ticket, Review
 
 
 @admin.register(Ticket)
@@ -12,9 +12,3 @@ class TicketAdmin(admin.ModelAdmin):
 class ReviewAdmin(admin.ModelAdmin):
     list_display = ("headline", "rating", "user", "ticket", "time_created")
     search_fields = ("headline", "body", "user__username")
-
-
-@admin.register(UserFollows)
-class UserFollowsAdmin(admin.ModelAdmin):
-    list_display = ("user", "followed_user")
-    search_fields = ("user__username", "followed_user__username")

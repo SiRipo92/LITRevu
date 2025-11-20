@@ -7,15 +7,27 @@ from django.urls import reverse
 from django.http import HttpResponseForbidden
 
 from .models import Ticket, Review
+from users.models import UserFollows
 from .forms import CreateTicketForm, ReviewForm
 
 
 @login_required
 def feed(request):
-    tickets = Ticket.objects.all()
-    reviews = Review.objects.all()
+    user = request.user
 
-    # One unified list of model instances, sorted by time
+    # IDs of users that the logged-in user follows
+    following_ids = UserFollows.objects.filter(
+        user=user
+    ).values_list("followed_user_id", flat=True)
+
+    # Include the user that's logged-in
+    visible_ids = list(following_ids) + [user.id]
+
+    # Only show posts from these users
+    tickets = Ticket.objects.filter(user_id__in=visible_ids)
+    reviews = Review.objects.filter(user_id__in=visible_ids)
+
+    # Merge + sort by creation date
     feed_items = sorted(
         chain(tickets, reviews),
         key=lambda obj: obj.time_created,
@@ -94,33 +106,6 @@ def delete_ticket(request, ticket_id):
     ticket.delete()
     messages.success(request, "Le ticket a été supprimé avec succès.")
     return redirect("reviews:posts")
-
-
-@login_required
-def my_posts(request):
-    """Display only the current user's tickets and reviews."""
-    user_tickets = Ticket.objects.filter(user=request.user)
-    user_reviews = Review.objects.filter(user=request.user)
-
-    feed_items = sorted(
-        chain(user_tickets, user_reviews),
-        key=lambda obj: obj.time_created,
-        reverse=True,
-    )
-
-    return render(
-        request,
-        "reviews/pages/my_posts.html",
-        {
-            "feed_items": feed_items,
-            "is_my_posts_page": True,
-        },
-    )
-
-
-@login_required
-def follows_placeholder(request):
-    return render(request, "placeholders/follows.html")
 
 
 @login_required
