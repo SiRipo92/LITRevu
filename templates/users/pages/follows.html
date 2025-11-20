@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Abonnements — LITRevu{% endblock %}
+
+{% block content %}
+
+<div class="w-full flex justify-center">
+    <div class="w-full max-w-5xl px-4">
+
+        <!-- H1 -->
+        <h1 class="text-blue-600 text-2xl font-semibold text-center mb-12">
+            Suivre d'autres utilisateurs
+        </h1>
+
+        <!-- ========================= -->
+        <!-- FORM (narrow INSIDE, but same container width) -->
+        <!-- ========================= -->
+
+        <form method="post" class="mb-12">
+            {% csrf_token %}
+
+            <div class="flex flex-col md:flex-row items-start gap-4">
+
+                <!-- INPUT (narrower by percentage, but container stays full width) -->
+                <input type="text"
+                       name="username"
+                       placeholder="Nom d'utilisateur"
+                       class="w-full md:w-4/5 border border-gray-400 px-3 py-2 ml-6 rounded
+                       placeholder:text-center text-left">
+
+                <!-- BUTTON ALIGNED WITH DESABONNER -->
+                <button type="submit"
+                        class="bg-blue-600 text-white px-6 py-2 rounded whitespace-nowrap h-auto ml-auto">
+                    Envoyer
+                </button>
+            </div>
+        </form>
+
+        <!-- ========================= -->
+        <!-- ABONNEMENTS -->
+        <!-- ========================= -->
+
+        <section id="abonnements" class="mt-10">
+
+            <h2 class="text-lg font-semibold mb-4 text-center ">Abonnements</h2>
+
+            <div class="border border-gray-300 divide-y divide-gray-300">
+
+                {% for follow in following_list %}
+                    <div class="grid grid-cols-1 md:grid-cols-[1fr_auto]">
+
+                        <!-- USERNAME -->
+                        <div class="px-4 py-3 w-full md:border-r md:border-gray-300">
+                            {{ follow.username }}
+                        </div>
+
+                        <!-- DESABONNER BUTTON -->
+                        <div class="px-4 py-3 flex justify-end items-center">
+                            <form action="{% url 'users:unfollow' follow.id %}" method="post">
+                                {% csrf_token %}
+                                <button class="text-red-600 hover:underline whitespace-nowrap">
+                                    Désabonner
+                                </button>
+                            </form>
+                        </div>
+
+                    </div>
+                {% empty %}
+                    <p class="px-4 py-4 text-gray-500">Aucun abonnement.</p>
+                {% endfor %}
+            </div>
+
+        </section>
+
+        <!-- ========================= -->
+        <!-- ABONNÉS -->
+        <!-- ========================= -->
+
+        <section id="abonnes" class="mt-16">
+
+            <h2 class="text-lg font-semibold mb-4 text-center">Abonnés</h2>
+
+            <div class="border border-gray-300 divide-y divide-gray-300">
+
+                {% for follower in followers_list %}
+                    <div class="px-4 py-3">
+                        {{ follower.username }}
+                    </div>
+                {% empty %}
+                    <p class="px-4 py-4 text-gray-500">Aucun abonné.</p>
+                {% endfor %}
+
+            </div>
+
+        </section>
+
+    </div>
+</div>
+
+{% endblock %}
