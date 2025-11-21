@@ -85,6 +85,7 @@ def my_follows(request):
         },
     )
 
+
 @login_required
 def unfollow_user(request, user_id):
     if request.method != "POST":
@@ -126,4 +127,3 @@ def my_posts(request):
             "is_my_posts_page": True,
         },
     )
-

@@ -1,6 +1,7 @@
 from urllib.parse import urlencode
 from django.shortcuts import redirect
 
+
 def redirect_with_toast(request, type_, message, to=None):
     """
     Redirect to a given URL (or the current page) with toast parameters.
