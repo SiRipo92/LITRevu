@@ -13,6 +13,7 @@ urlpatterns = [
     path("ticket/supprimer/<int:ticket_id>/", views.delete_ticket, name="delete_ticket"),
 
     # Reviews (Creating a critique & responding to requests)
+    path("critique/creer/<int:ticket_id>/", views.create_review, name="create_review"),
     path("critique/creer/", views.create_review, name="create_review"),
     path("critique/creer/<int:ticket_id>/", views.create_review, name="create_review_for_ticket"),
     path("critique/modifier/<int:review_id>/", views.edit_review, name="edit_review"),

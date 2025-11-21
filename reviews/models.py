@@ -58,7 +58,11 @@ class Review(models.Model):
         user: Author of the review (FK to AUTH_USER_MODEL).
         time_created: Timestamp set on creation.
     """
-    ticket = models.ForeignKey(to=Ticket, on_delete=models.CASCADE)
+    ticket = models.ForeignKey(
+        to=Ticket,
+        on_delete=models.CASCADE,
+        related_name="reviews",
+    )
     rating = models.PositiveSmallIntegerField(
         # validates that rating must be between 0 and 5
         validators=[MinValueValidator(0), MaxValueValidator(5)])
@@ -78,7 +82,8 @@ class Review(models.Model):
         verbose_name_plural = "Reviews"
         ordering = ['-id']
         constraints = [
-            UniqueConstraint(fields=['user', 'ticket'], name='unique_review_per_user_ticket')
+            UniqueConstraint(fields=['user', 'ticket'], name='unique_review_per_user_ticket'),
+            models.UniqueConstraint(fields=["ticket"], name="unique_review_per_ticket")
         ]
 
     def __str__(self):

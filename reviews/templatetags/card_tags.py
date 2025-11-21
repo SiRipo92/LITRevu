@@ -19,14 +19,19 @@ def render_card_grid(context, item):
     is_my_posts_page = context.get("is_my_posts_page", False)
 
     if isinstance(item, Ticket):
+        has_review = Review.objects.filter(ticket=item).exists()
+
+        allow_review = (not is_my_posts_page and not has_review)
+
         html = render_to_string(
             "reviews/components/ticket_card.html",
             {
                 "ticket": item,
                 "request": request,
-                "show_actions": True,                      # base actions zone
-                "allow_review": not is_my_posts_page,      # feed: True, my posts: False
-                "allow_edit_delete": is_my_posts_page,     # feed: False, my posts: True
+                "show_actions": True,
+                "allow_review": allow_review,
+                "has_review": has_review,
+                "allow_edit_delete": is_my_posts_page,
             },
         )
         return mark_safe(html)

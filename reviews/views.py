@@ -5,6 +5,7 @@ from django.utils import timezone
 from django.contrib import messages
 from django.urls import reverse
 from django.http import HttpResponseForbidden
+from LITRevu.utils.toast import redirect_with_toast
 
 from .models import Ticket, Review
 from users.models import UserFollows
@@ -26,10 +27,15 @@ def feed(request):
     # Only show posts from these users
     tickets = Ticket.objects.filter(user_id__in=visible_ids)
     reviews = Review.objects.filter(user_id__in=visible_ids)
+    responses_to_my_tickets = Review.objects.filter(ticket__user=request.user)
 
     # Merge + sort by creation date
     feed_items = sorted(
-        chain(tickets, reviews),
+        chain(
+            tickets,
+            reviews,
+            responses_to_my_tickets,
+        ),
         key=lambda obj: obj.time_created,
         reverse=True,
     )
@@ -124,7 +130,16 @@ def create_review(request, ticket_id: int | None = None):
     """
     if ticket_id is not None:
         # Response-to-ticket mode
+        # Desactivate 'Create review button' if Review has already been posted for a ticket
         ticket = get_object_or_404(Ticket, pk=ticket_id)
+        # BLOCK review creation for already-reviewed ticket
+        if hasattr(ticket, "review"):
+            return redirect_with_toast(
+                request,
+                "error",
+                "Une critique existe déjà pour ce billet."
+            )
+
         if request.method == "POST":
             form = ReviewForm(request.POST, user=request.user, ticket=ticket)
             if form.is_valid():
