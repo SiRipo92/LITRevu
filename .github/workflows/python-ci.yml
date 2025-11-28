@@ -101,11 +101,10 @@ jobs:
       - name: Run tests with coverage
         run: |
           coverage erase
-          # Mirror your local command exactly:
-          coverage run --branch manage.py test users reviews
-          coverage report -m
-          coverage xml
-          coverage html
+          python -m coverage run --branch manage.py test users reviews
+          python -m coverage report -m
+          python -m coverage xml
+          python -m coverage html
 
       - name: Upload coverage artifacts
         if: always()
