@@ -37,9 +37,9 @@ ALLOWED_HOSTS = os.environ.get(
 ).split(",")
 
 CSRF_TRUSTED_ORIGINS = [
-    origin.rstrip("/")
+    origin.strip()
     for origin in os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",")
-    if origin
+    if origin.strip()
 ]
 
 # Application definition
