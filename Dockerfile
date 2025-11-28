@@ -7,6 +7,9 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
+# 🔑 Set Django env defaults for build-time (prod-like)
+ENV DJANGO_DEBUG=0
+
 # System dependencies: build tools + node for Tailwind
 RUN apt-get update && apt-get install -y \
     build-essential \
@@ -41,5 +44,5 @@ EXPOSE 8000
 # Default environment; you override in production with DJANGO_DEBUG=0
 ENV DJANGO_DEBUG=0
 
-# Launch the app with Gunicorn
+# Don't reset DJANGO_DEBUG here; Render will override if needed
 CMD ["sh", "-c", "gunicorn LITRevu.wsgi:application --bind 0.0.0.0:${PORT:-8000}"]
