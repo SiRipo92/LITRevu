@@ -11,7 +11,7 @@
     <section class="border rounded-lg p-6 bg-white">
       <h2 class="text-lg font-semibold">Vous êtes en train de poster en réponse à</h2>
       <div class="p-4">
-        {% include "reviews/components/ticket_card.html" with ticket=ticket request=request show_actions=False only %}
+        {% include "reviews/components/ticket_card.html" with ticket=ticket show_actions=False %}
       </div>
     </section>
 

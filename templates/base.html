@@ -7,7 +7,7 @@
     <title>{% block title %}LITRevu{% endblock %}</title>
 
     <!-- ✅ Load Tailwind output -->
-    <link rel="stylesheet" href="{% static 'css/dist/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'css/tailwind.css' %}">
   </head>
 
 
@@ -20,11 +20,11 @@
 
       {# LEFT CELL: spacer or small home link on md+ #}
       <div class="hidden md:flex items-center">
-        <a href="{% url 'home' %}"
-           class="flex items-center focus:outline-none focus:ring-2 focus:ring-white rounded px-2 py-1"
-           aria-label="Accueil">
-          <span class="sr-only">Accueil</span>
-        </a>
+        {% if request.user.is_authenticated %}
+            <span class="text-sm lg:text-base font-medium">
+              Bienvenue, {{ request.user.username }}
+            </span>
+        {% endif %}
       </div>
 
       {# CENTER CELL: title always centered on md+; left-aligned on mobile #}
@@ -32,6 +32,13 @@
         <h1 class="text-xl lg:text-3xl font-bold tracking-wide">
           LITReview
         </h1>
+
+        {% if request.user.is_authenticated %}
+            <!-- Mobile-center welcome message -->
+            <span class="md:hidden text-xs [@media(max-width:377px)]:!text-[0.55rem] leading-tight block max-w-full truncate text-white/90 mt-0.5">
+              Bienvenue, {{ request.user.username }}
+            </span>
+        {% endif %}
       </div>
 
       {# RIGHT CELL: burger on mobile; NAV on md+ #}
@@ -61,7 +68,7 @@
 
           {# NAV only on md+ (RIGHT side) #}
           <nav class="hidden md:flex items-center gap-2 lg:gap-4"
-               role="navigation" aria-label="Navigation principale">
+               aria-label="Navigation principale">
             <a href="{% url 'reviews:feed' %}"
                class="hover:underline focus:outline-none focus:ring-2 focus:ring-white rounded px-1
                       md:text-[.75rem] lg:text-[0.9rem] xl:text-base">
@@ -108,7 +115,7 @@
        aria-hidden="true"></div>
 
       <!-- Drawer BELOW header (opens from right) -->
-      <aside id="mobileMenu"
+      <div id="mobileMenu"
              class="fixed right-0 top-16 md:top-24 z-40 hidden
               h-[calc(100vh-4rem)] md:h-[calc(100vh-6rem)]
               w-[60%] sm:w-[50%] md:w-[40%] max-w-[420px]
@@ -119,7 +126,7 @@
              aria-modal="true"
              aria-label="Menu mobile">
         <nav class="h-full overflow-y-auto p-6"
-             role="navigation" aria-label="Navigation mobile">
+             aria-label="Navigation mobile">
           <ul class="flex flex-col gap-4">
             <li><a class="text-blue-600 font-medium focus:outline-none focus:ring-2 focus:ring-blue-600 rounded px-2 py-1" href="{% url 'reviews:feed' %}">Flux</a></li>
             <li><a class="text-blue-600 font-medium focus:outline-none focus:ring-2 focus:ring-blue-600 rounded px-2 py-1" href="{% url 'users:my_posts' %}">Posts</a></li>
@@ -135,7 +142,7 @@
             </li>
           </ul>
         </nav>
-      </aside>
+      </div>
     {% endif %}
 
 
@@ -151,15 +158,5 @@
       <script src="{% static 'js/header_menu.js' %}"></script>
     {% endif %}
 
-    {% if request.user.is_staff %}
-    <!-- Breakpoint debug overlay (development only for logged in Super User [ADMIN]) -->
-    <div class="fixed bottom-2 right-2 text-xs bg-black/70 text-white px-2 py-1 rounded z-50 pointer-events-none">
-      <span class="block sm:hidden">base</span>
-      <span class="hidden sm:block md:hidden">sm</span>
-      <span class="hidden md:block lg:hidden">md</span>
-      <span class="hidden lg:block xl:hidden">lg</span>
-      <span class="hidden xl:block">xl</span>
-    </div>
-  {% endif %}
   </body>
 </html>

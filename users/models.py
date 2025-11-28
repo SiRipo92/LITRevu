@@ -1,10 +1,13 @@
+"""Defines the user models for User (inherits Django's Abstract User) and UserFollows."""
+
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.conf import settings
 
 
 class User(AbstractUser):
     """Custom user model for LITRevu."""
+
     pass
 
 
@@ -15,6 +18,7 @@ class UserFollows(models.Model):
     The (user, followed_user) pair is constrained to be unique to prevent
     duplicate follow rows.
     """
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -28,6 +32,7 @@ class UserFollows(models.Model):
 
     class Meta:
         """Enforce uniqueness of a (follower, followed) pair."""
+
         unique_together = ("user", "followed_user")
         verbose_name = "User Follow"
         verbose_name_plural = "User Follows"

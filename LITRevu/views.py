@@ -1,6 +1,9 @@
-from django.shortcuts import render, redirect
-from django.contrib.auth import login
+"""View for LITRevu's homepage."""
+
 from django.contrib import messages
+from django.contrib.auth import login
+from django.shortcuts import redirect, render
+
 from users.forms import LoginForm
 
 

@@ -1,24 +1,24 @@
-from itertools import chain
-from django.shortcuts import render, redirect
-from django.urls import reverse
-from django.http import HttpResponseRedirect
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth import logout
-from .forms import RegistrationForm
-from django.contrib.auth import get_user_model
+"""Defines Behavior of User Views to register, logout, follow/unfollow and for user posts."""
 
-from reviews.models import Ticket, Review
-from .models import UserFollows
+from itertools import chain
+
+from django.contrib.auth import get_user_model, logout
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseRedirect
+from django.shortcuts import redirect, render
+from django.urls import reverse
+
 from LITRevu.utils.toast import redirect_with_toast
+from reviews.models import Review, Ticket
+
+from .forms import RegistrationForm
+from .models import UserFollows
 
 User = get_user_model()
 
 
 def register(request):
-    """
-    Create a new user and redirect back to home with a querystring
-    so JS can display a success toast.
-    """
+    """Create a new user and redirect to home with a querystring allowing toast to display message."""
     if request.method == "POST":
         form = RegistrationForm(request.POST)
         if form.is_valid():
@@ -33,9 +33,7 @@ def register(request):
 
 
 def logout_view(request):
-    """
-    Log the user out and redirect to home with a query param so JS can show a toast.
-    """
+    """Log the user out and redirect to home with a query param so JS can show a toast."""
     if request.method == "POST":
         logout(request)
     # redirect to /?logout=1 for the toast JS
@@ -44,6 +42,7 @@ def logout_view(request):
 
 @login_required
 def my_follows(request):
+    """Abonnements page views handling redirects/errors when managing list of follows."""
     user = request.user
 
     # ---------- 1. Process follow form ----------
@@ -88,6 +87,7 @@ def my_follows(request):
 
 @login_required
 def unfollow_user(request, user_id):
+    """Handle changes in view when a user is unfollowed."""
     if request.method != "POST":
         return redirect("users:my_follows")
 

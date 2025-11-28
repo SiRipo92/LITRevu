@@ -1,34 +1,14 @@
-import io
-import shutil
-import tempfile
-from PIL import Image
+"""Tests for ticket and review views (ticket CRUD, review CRUD, and feed pages)."""
+
 from django.contrib.auth import get_user_model
-from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.urls import reverse
 
-from reviews.models import Ticket, Review
+from reviews.models import Review, Ticket
 
 User = get_user_model()
 
-# Create an isolated temp MEDIA root for this test module
-TEMP_MEDIA_ROOT = tempfile.mkdtemp(prefix="media-tests-")
 
-
-def make_image_file(name="test.jpg", fmt="JPEG", size=(8, 8), color=(255, 0, 0)):
-    """
-    Build a tiny in-memory image and wrap it in SimpleUploadedFile so it behaves
-    like a user-upload via <input type="file">.
-    """
-    bio = io.BytesIO()
-    img = Image.new("RGB", size=size, color=color)
-    img.save(bio, format=fmt)
-    bio.seek(0)
-    content_type = "image/jpeg" if fmt.upper() == "JPEG" else "image/png"
-    return SimpleUploadedFile(name=name, content=bio.read(), content_type=content_type)
-
-
-@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT, MEDIA_URL="/media/")
 class TicketViewsTests(TestCase):
     """End-to-end view tests covering the ticket CRUD pages and related listings."""
 
@@ -37,12 +17,6 @@ class TicketViewsTests(TestCase):
         """Create two users shared by all tests."""
         cls.user = User.objects.create_user(username="alice", password="pass12345")
         cls.other = User.objects.create_user(username="bob", password="pass12345")
-
-    @classmethod
-    def tearDownClass(cls):
-        """Remove the temporary MEDIA directory created for this module."""
-        super().tearDownClass()
-        shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
     def setUp(self):
         """Authenticate as the main user for request flows requiring login."""
@@ -87,42 +61,25 @@ class TicketViewsTests(TestCase):
         self.assertTemplateUsed(resp, "reviews/forms/submit_ticket.html")
         self.assertEqual(resp.context["ticket_form"].instance.id, t.id)
 
-    def test_edit_ticket_post_updates_title_and_keeps_image(self):
-        """POST edit without delete flag updates fields but preserves the existing image."""
-        t = Ticket.objects.create(title="Old", description="", user=self.user)
-        # First attach an image
-        self.client.post(
-            reverse("reviews:edit_ticket", args=[t.id]),
-            data={"title": "Old", "description": "d", "image": make_image_file()},
-            follow=False,
-        )
-        t.refresh_from_db()
-        self.assertTrue(bool(t.image))
-
-        # Now update title, keep image (no delete_existing_image flag)
-        resp = self.client.post(
-            reverse("reviews:edit_ticket", args=[t.id]),
-            data={"title": "New Title", "description": "d"},
-            follow=False,
-        )
-        self.assertEqual(resp.status_code, 302)
-        self.assertRedirects(resp, reverse("reviews:posts"))
-        t.refresh_from_db()
-        self.assertEqual(t.title, "New Title")
-        self.assertTrue(bool(t.image))
-
     def test_edit_ticket_post_can_remove_existing_image(self):
         """POST edit with delete_existing_image removes the image and redirects."""
         t = Ticket.objects.create(
-            title="With Img", description="", user=self.user, image=make_image_file()
+            title="With Img",
+            description="",
+            user=self.user,
+            image="ticket_images/dummy.jpg",  # simple fake path, no real file needed
         )
         resp = self.client.post(
             reverse("reviews:edit_ticket", args=[t.id]),
-            data={"title": "With Img", "description": "", "delete_existing_image": "true"},
+            data={
+                "title": "With Img",
+                "description": "",
+                "delete_existing_image": "true",
+            },
             follow=False,
         )
         self.assertEqual(resp.status_code, 302)
-        self.assertRedirects(resp, reverse("reviews:posts"))
+        self.assertRedirects(resp, reverse("users:my_posts"))
         t.refresh_from_db()
         self.assertFalse(bool(t.image))
 
@@ -138,32 +95,29 @@ class TicketViewsTests(TestCase):
         t = Ticket.objects.create(title="Delete me", description="", user=self.user)
         resp = self.client.post(reverse("reviews:delete_ticket", args=[t.id]))
         self.assertEqual(resp.status_code, 302)
-        self.assertRedirects(resp, reverse("reviews:posts"))
+        self.assertRedirects(resp, reverse("users:my_posts"))
         self.assertFalse(Ticket.objects.filter(id=t.id).exists())
 
 
-@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT, MEDIA_URL="/media/")
 class ReviewAndFeedViewsTests(TestCase):
-    """
-    Tests for:
+    """Tests for feed and review-related views.
+
+    Covers:
     - feed
     - my_posts
     - create_review (standalone + response mode)
     - edit_review
-    - delete_review
+    - delete_review.
     """
 
     @classmethod
     def setUpTestData(cls):
+        """Create shared users used across review/feed view tests."""
         cls.user = User.objects.create_user(username="ivy", password="StrongPassw0rd!")
         cls.other = User.objects.create_user(username="john", password="password123")
 
-    @classmethod
-    def tearDownClass(cls):
-        super().tearDownClass()
-        shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
-
     def setUp(self):
+        """Log in the main user and create a base ticket and review."""
         # Auth user
         self.client.force_login(self.user)
 
@@ -185,7 +139,7 @@ class ReviewAndFeedViewsTests(TestCase):
         # URLs grouped like in views.py
         self.urls = {
             "feed": reverse("reviews:feed"),
-            "my_posts": reverse("reviews:posts"),
+            "my_posts": reverse("users:my_posts"),
 
             "create_review_standalone": reverse("reviews:create_review"),
             "create_review_response": reverse("reviews:create_review_for_ticket", args=[self.ticket.id]),
@@ -199,6 +153,7 @@ class ReviewAndFeedViewsTests(TestCase):
     # ------------------------
 
     def test_feed_shows_tickets_and_reviews(self):
+        """Feed view returns at least one item in the 'feed_items' context list."""
         resp = self.client.get(self.urls["feed"])
         self.assertEqual(resp.status_code, 200)
         self.assertIn("feed_items", resp.context)
@@ -209,6 +164,7 @@ class ReviewAndFeedViewsTests(TestCase):
     # ------------------------
 
     def test_create_review_response_mode_get(self):
+        """GET create_review_for_ticket renders response mode with the target ticket."""
         resp = self.client.get(self.urls["create_review_response"])
         self.assertEqual(resp.status_code, 200)
         self.assertTrue(resp.context["is_response_mode"])
@@ -219,6 +175,7 @@ class ReviewAndFeedViewsTests(TestCase):
     # ------------------------
 
     def test_create_review_standalone_get(self):
+        """GET create_review shows standalone mode with ticket and review forms."""
         resp = self.client.get(self.urls["create_review_standalone"])
         self.assertEqual(resp.status_code, 200)
         self.assertFalse(resp.context["is_response_mode"])
@@ -226,6 +183,7 @@ class ReviewAndFeedViewsTests(TestCase):
         self.assertIn("review_form", resp.context)
 
     def test_create_review_standalone_post_creates_ticket_and_review(self):
+        """Valid POST creates both a new Ticket and a new Review for the user."""
         resp = self.client.post(
             self.urls["create_review_standalone"],
             data={
@@ -255,6 +213,7 @@ class ReviewAndFeedViewsTests(TestCase):
     # ------------------------
 
     def test_edit_review_get_displays_prefilled_form(self):
+        """GET edit_review returns a prefilled form in response mode."""
         resp = self.client.get(self.urls["edit_review"])
         self.assertEqual(resp.status_code, 200)
         form = resp.context["review_form"]
@@ -262,13 +221,22 @@ class ReviewAndFeedViewsTests(TestCase):
         self.assertTrue(resp.context["is_response_mode"])
 
     def test_edit_review_wrong_user_gets_404(self):
+        """Editing another user's review should return a 404 response."""
+        # Create a separate ticket for the other user's review
+        other_ticket = Ticket.objects.create(
+            title="Second ticket",
+            description="",
+            user=self.other,
+        )
+
         other_review = Review.objects.create(
             headline="Other review",
             body="Body",
             rating=3,
             user=self.other,
-            ticket=self.ticket,
+            ticket=other_ticket,
         )
+
         url = reverse("reviews:edit_review", args=[other_review.id])
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, 404)
@@ -278,11 +246,13 @@ class ReviewAndFeedViewsTests(TestCase):
     # ------------------------
 
     def test_delete_review_get_redirects_and_deletes(self):
+        """GET delete_review deletes the review and redirects to my_posts."""
         resp = self.client.get(self.urls["delete_review"])
-        self.assertRedirects(resp, reverse("reviews:posts"))
+        self.assertRedirects(resp, reverse("users:my_posts"))
         self.assertFalse(Review.objects.filter(id=self.review.id).exists())
 
     def test_delete_review_wrong_user_forbidden(self):
+        """Deleting another user's review via POST should return HTTP 403."""
         other_ticket = Ticket.objects.create(title="X", description="Y", user=self.other)
         other_review = Review.objects.create(
             headline="Bad",

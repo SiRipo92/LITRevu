@@ -1,6 +1,6 @@
 {# Render 0–5 solid "★" (or SVGs if you prefer). Expects: value (int 0..5) #}
-<div class="inline-flex items-center" aria-label="{{ value }} étoile(s)">
+<span class="inline-flex items-center" role="img" aria-label="{{ value }} étoile(s)">
   {% for i in "01234" %}
     {% if forloop.counter0 < value %}★{% else %}☆{% endif %}
   {% endfor %}
-</div>
+</span>

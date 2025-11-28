@@ -1,24 +1,31 @@
+"""Forms for creating and validating Ticket and Review objects."""
+
 from django import forms
 from django.core.exceptions import ValidationError
-from .models import Ticket, Review
+
+from .models import Review, Ticket
 
 
-# Base class to remove trailing colons from labels
 class NoColonLabelForm(forms.ModelForm):
+    """Base ModelForm that removes trailing colons from field labels."""
+
     def __init__(self, *args, **kwargs):
+        """Initialise the form and remove the default label suffix from all fields."""
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             field.label_suffix = ""  # removes the colon automatically
 
 
-class CreateTicketForm(NoColonLabelForm):  # inherit from NoColonLabelForm
+class CreateTicketForm(NoColonLabelForm):
+    """Form used to create or update Ticket instances."""
+
     # Explicitly define the image field to avoid ClearableFileInput
     image = forms.ImageField(
         required=False,
         widget=forms.FileInput(
             attrs={
                 "id": "id_image",
-                "class": "hidden",  # you keep it hidden, JS drives it
+                "class": "hidden",  # keeps it hidden, JS drives it
                 "accept": "image/*",
             }
         ),
@@ -26,6 +33,8 @@ class CreateTicketForm(NoColonLabelForm):  # inherit from NoColonLabelForm
     )
 
     class Meta:
+        """Meta options for CreateTicketForm."""
+
         model = Ticket
         fields = ["title", "description", "image"]
 
@@ -71,6 +80,8 @@ class ReviewForm(NoColonLabelForm):
     )
 
     class Meta:
+        """Meta options for ReviewForm."""
+
         model = Review
         fields = ("headline", "rating", "body")
         labels = {
@@ -88,11 +99,13 @@ class ReviewForm(NoColonLabelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        """Attach user and ticket before running the parent ModelForm initialisation."""
         self.user = kwargs.pop("user", None)
         self.ticket = kwargs.pop("ticket", None)
         super().__init__(*args, **kwargs)
 
     def clean(self):
+        """Run default validation and ensure the user has not already reviewed the ticket."""
         data = super().clean()
         if self.user and self.ticket:
             if Review.objects.filter(user=self.user, ticket=self.ticket).exists():

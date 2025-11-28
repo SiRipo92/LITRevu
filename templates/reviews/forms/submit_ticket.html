@@ -3,7 +3,7 @@
 {% block title %}{% if editing %}Modifier votre ticket{% else %}Créer un ticket{% endif %}{% endblock %}
 
 {% block content %}
-<h1 class="text-blue-600 text-2xl font-semibold text-center w-full mb-8">
+<h1 class="text-blue-600 text-2xl font-semibold text-center w-full my-10">
   {% if editing %}Modifier votre ticket{% else %}Créer un ticket{% endif %}
 </h1>
 
@@ -12,6 +12,7 @@
   {{ ticket_form.non_field_errors }}
 
   <section class="border rounded-lg p-6 bg-white space-y-6">
+      <h2 class="hidden">Créer un ticket</h2>
     {% include "reviews/components/ticket_form_fields.html" with ticket_form=ticket_form editing=editing %}
   </section>
 

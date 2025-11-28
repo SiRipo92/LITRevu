@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Change default radio styles for 'Ratings' in Review form */
+.review-rating input[type="radio"] {
+  /* remove native look */
+  -webkit-appearance: none;
+  appearance: none;
+
+  /* base circle */
+  width: 1rem;
+  height: 1rem;
+  border-radius: 9999px;
+  border: 2px solid #000;
+  background-color: #fff;
+  display: inline-grid;
+  place-content: center;
+  cursor: pointer;
+}
+
+/* inner dot */
+.review-rating input[type="radio"]::before {
+  content: "";
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background-color: #000;
+  transform: scale(0);
+  transition: transform 0.1s ease-in-out;
+}
+
+/* when selected: show the dot */
+.review-rating input[type="radio"]:checked::before {
+  transform: scale(1);
+}

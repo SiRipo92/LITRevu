@@ -8,11 +8,11 @@ click==8.3.0
 colorama==0.4.6
 cookiecutter==2.6.0
 coverage==7.11.0
-Django==5.2.7
-django-tailwind==4.2.0
+Django==4.2.16
 flake8==7.3.0
 green==4.0.2
 idna==3.11
+isort==7.0.0
 Jinja2==3.1.6
 lxml==6.0.2
 markdown-it-py==4.0.0
@@ -29,7 +29,6 @@ python-slugify==8.0.4
 PyYAML==6.0.3
 requests==2.32.5
 rich==14.2.0
-setuptools==80.9.0
 six==1.17.0
 sqlparse==0.5.3
 text-unidecode==1.3

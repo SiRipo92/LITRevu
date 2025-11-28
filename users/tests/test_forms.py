@@ -1,7 +1,9 @@
-from django.test import TestCase
-from django.contrib.auth import get_user_model
+"""Tests Forms for User Registration and User Login."""
 
-from users.forms import RegistrationForm, LoginForm
+from django.contrib.auth import get_user_model
+from django.test import TestCase
+
+from users.forms import LoginForm, RegistrationForm
 
 User = get_user_model()
 
@@ -46,7 +48,6 @@ class RegistrationFormTests(TestCase):
 
     def test_password_strength_rules_apply(self):
         """Weak passwords fail default validators; error surfaces on 'password2'."""
-
         # Too simple password should fail default validators
         form = RegistrationForm(data={
             "username": "charlie",
@@ -58,7 +59,6 @@ class RegistrationFormTests(TestCase):
 
     def test_duplicate_username_rejected(self):
         """An existing username causes a validation error on 'username'."""
-
         User.objects.create_user(username="dana", password="SomePassw0rd!")
         form = RegistrationForm(data={
             "username": "dana",
@@ -73,6 +73,7 @@ class LoginFormTests(TestCase):
     """Form-level tests for LoginForm (AuthenticationForm-based)."""
 
     def setUp(self):
+        """Set up a temporary user."""
         self.user = User.objects.create_user(
             username="henry",
             password="StrongPassw0rd!"
@@ -116,7 +117,7 @@ class LoginFormTests(TestCase):
         self.assertIn("password", form.errors)
 
     def test_remember_me_field_present_and_optional(self):
-        """'Se souvenir de moi' checkbox should exist but not be required."""
+        """Checkbox for 'Se souvenir de moi' should exist but not be required."""
         form = LoginForm()
         self.assertIn("remember_me", form.fields)
         self.assertFalse(form.fields["remember_me"].required)

@@ -1,4 +1,6 @@
+"""Toast redirect with messaging for User-Friendly UI."""
 from urllib.parse import urlencode
+
 from django.shortcuts import redirect
 
 

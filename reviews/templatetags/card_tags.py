@@ -1,8 +1,16 @@
+"""
+Custom template tags for rendering ticket and review cards in the feed.
+
+Defines the ``render_card_grid`` tag, which selects the appropriate card
+template for Ticket or Review instances and adapts actions based on the
+current page context (flux vs. "Mes Posts").
+"""
+
 from django import template
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 
-from reviews.models import Ticket, Review
+from reviews.models import Review, Ticket
 
 register = template.Library()
 

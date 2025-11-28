@@ -1,6 +1,10 @@
+"""Tests User Views (Homepage, Feed, Follows/Unfollows, Login/Logout, etc)."""
+
+from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
-from django.contrib.auth import get_user_model, SESSION_KEY
+
+from users.models import UserFollows
 
 User = get_user_model()
 
@@ -13,7 +17,6 @@ class RegistrationViewTests(TestCase):
 
     def test_register_get_renders_form(self):
         """GET /register/ renders the registration page with required fields."""
-
         url = reverse("users:register")
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, 200)
@@ -24,7 +27,6 @@ class RegistrationViewTests(TestCase):
 
     def test_register_post_success_redirects_with_qs(self):
         """POST valid data to /register/ creates a user and redirects to home with query params."""
-
         url = reverse("users:register")
         data = {
             "username": "eve",
@@ -39,40 +41,15 @@ class RegistrationViewTests(TestCase):
         self.assertIn("u=eve", location)
         self.assertTrue(User.objects.filter(username="eve").exists())
 
-    def test_register_post_invalid_shows_errors(self):
-        """POST invalid data re-renders the form with field errors; no user is created."""
-
-        url = reverse("users:register")
-        data = {
-            "username": "frank",
-            "password1": "Mismatch123!",
-            "password2": "Different456!",
-        }
-        resp = self.client.post(url, data)
-        # re-render the same template with errors
-        self.assertEqual(resp.status_code, 200)
-
-        # Prefer checking the form object in the context rather than strings
-        self.assertIn("form", resp.context)
-        form = resp.context["form"]
-        self.assertFalse(form.is_valid())
-        # UserCreationForm puts the mismatch error on password2
-        self.assertIn("password2", form.errors)
-
-        # Optional: smoke checks on the HTML rather than exact wording
-        self.assertContains(resp, 'id="id_password2"')
-        self.assertIn(b'aria-invalid="true"', resp.content)
-
-        # No user created
-        self.assertFalse(User.objects.filter(username="frank").exists())
-
     def test_register_get_renders_template(self):
+        """GET /register/ renders the registration page with required fields."""
         resp = self.client.get(reverse("users:register"))
         self.assertEqual(resp.status_code, 200)
         self.assertTemplateUsed(resp, "registration/register.html")
         self.assertIn("form", resp.context)
 
     def test_register_post_valid_redirects_with_querystring(self):
+        """POST valid data to /register/ creates a user and redirects to home."""
         resp = self.client.post(
             reverse("users:register"),
             data={
@@ -90,6 +67,7 @@ class RegistrationViewTests(TestCase):
         self.assertTrue(User.objects.filter(username="charlie").exists())
 
     def test_register_post_invalid_stays_on_page_and_shows_form(self):
+        """Tests invalid form behavior for registration."""
         # password mismatch → invalid branch
         resp = self.client.post(
             reverse("users:register"),
@@ -106,6 +84,7 @@ class RegistrationViewTests(TestCase):
         self.assertFalse(User.objects.filter(username="dana").exists())
 
     def test_register_post_duplicate_username_is_invalid(self):
+        """Tests registration form invalidation to avoid duplicate usernames."""
         User.objects.create_user(username="alex", password="x")
         resp = self.client.post(
             reverse("users:register"),
@@ -137,6 +116,7 @@ class HomeViewLoginTests(TestCase):
     """View-level tests for login functionality (US02)."""
 
     def setUp(self):
+        """Temporarily sets up a User Object to test login."""
         self.user = User.objects.create_user(
             username="ivy",
             password="StrongPassw0rd!"
@@ -201,12 +181,16 @@ class HomeViewLoginTests(TestCase):
 
 
 class LogoutFlowTests(TestCase):
+    """Class tests for Logging out a User."""
+
     def setUp(self):
+        """Temporarily sets up a User Object to test logout."""
         self.user = User.objects.create_user(username="zoe", password="StrongPassw0rd!")
         self.home_url = reverse("home")
         self.logout_url = reverse("logout")
 
     def test_post_logout_redirects_home_with_logout_qs_and_logs_out(self):
+        """POST logout redirects to home page."""
         self.client.login(username="zoe", password="StrongPassw0rd!")
         resp = self.client.post(self.logout_url, follow=False)
         self.assertEqual(resp.status_code, 302)
@@ -218,6 +202,7 @@ class LogoutFlowTests(TestCase):
         self.assertTrue(resp2.wsgi_request.user.is_anonymous)
 
     def test_get_logout_also_redirects_home_with_qs(self):
+        """GET logout redirects to home page."""
         self.client.login(username="zoe", password="StrongPassw0rd!")
         resp = self.client.get(self.logout_url, follow=False)
         self.assertEqual(resp.status_code, 302)
@@ -225,13 +210,17 @@ class LogoutFlowTests(TestCase):
 
 
 class HeaderRenderingTests(TestCase):
+    """Class tests for Header Rendering (showing Header Menu when user logs in)."""
+
     def setUp(self):
+        """Set up the testing conditions with urls needed."""
         self.home_url = reverse("home")
         self.feed_url = reverse(FEED_NAME)
-        self.posts_url = reverse("reviews:posts")
-        self.follows_url = reverse("reviews:follows")
+        self.posts_url = reverse("users:my_posts")
+        self.follows_url = reverse("users:my_follows")
 
     def test_anonymous_header_has_no_auth_nav_elements(self):
+        """Tests main functionalities of header menu when user is not logged in."""
         resp = self.client.get(self.home_url)
         html = resp.content.decode("utf-8")
         self.assertNotIn('id="burgerBtn"', html)
@@ -240,6 +229,7 @@ class HeaderRenderingTests(TestCase):
         self.assertIn("LITReview", html)
 
     def test_authenticated_header_has_burger_overlay_drawer_and_nav_links(self):
+        """Tests main functionalities of header menu when user is logged in."""
         User.objects.create_user(username="yan", password="StrongPassw0rd!")
         self.client.login(username="yan", password="StrongPassw0rd!")
         resp = self.client.get(self.home_url)
@@ -256,17 +246,180 @@ class HeaderRenderingTests(TestCase):
 
 
 class ReviewsAccessTests(TestCase):
+    """Class tests for Reviews Access."""
+
     def setUp(self):
+        """Set up the testing conditions with urls needed."""
         self.feed_url = reverse(FEED_NAME)
 
     def test_feed_requires_login(self):
+        """Tests access to feed page if user is not logged in."""
         resp = self.client.get(self.feed_url, follow=False)
         self.assertEqual(resp.status_code, 302)
         self.assertIn(reverse("home"), resp["Location"])
 
     def test_feed_renders_when_logged_in(self):
+        """Tests user access to feed page if user is logged in."""
         User.objects.create_user(username="kim", password="StrongPassw0rd!")
         self.client.login(username="kim", password="StrongPassw0rd!")
         resp = self.client.get(self.feed_url)
         self.assertEqual(resp.status_code, 200)
         self.assertIn(b"Flux", resp.content)
+
+
+class MyFollowsViewTests(TestCase):
+    """Tests for the `my_follows` view (listing and creating follow relations)."""
+
+    def setUp(self):
+        """Create two users and log `alice` in before each test."""
+        self.user = User.objects.create_user(
+            username="alice",
+            password="password123",
+            email="alice@example.com",
+        )
+        self.other = User.objects.create_user(
+            username="bob",
+            password="password123",
+            email="bob@example.com",
+        )
+        self.client.login(username="alice", password="password123")
+        self.url = reverse("users:my_follows")
+
+    def test_my_follows_get_displays_following_and_followers(self):
+        """GET should populate following_list and followers_list in the context."""
+        # alice -> bob
+        UserFollows.objects.create(user=self.user, followed_user=self.other)
+        # bob -> alice
+        UserFollows.objects.create(user=self.other, followed_user=self.user)
+
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "users/pages/follows.html")
+
+        following_list = list(response.context["following_list"])
+        followers_list = list(response.context["followers_list"])
+
+        self.assertIn(self.other, following_list)
+        self.assertIn(self.other, followers_list)
+
+    def test_my_follows_post_with_empty_username_shows_error(self):
+        """POST with an empty username must not create a follow relation."""
+        initial_count = UserFollows.objects.count()
+
+        response = self.client.post(self.url, {"username": ""})
+
+        # redirect_with_toast redirects back to the page with a querystring
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(self.url, response["Location"])
+        self.assertEqual(UserFollows.objects.count(), initial_count)
+
+    def test_my_follows_post_with_nonexistent_user_shows_error(self):
+        """POST with an unknown username must not create a follow relation."""
+        initial_count = UserFollows.objects.count()
+
+        response = self.client.post(self.url, {"username": "does_not_exist"})
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(self.url, response["Location"])
+        self.assertEqual(UserFollows.objects.count(), initial_count)
+
+    def test_my_follows_post_cannot_follow_self(self):
+        """POST with own username should be rejected and not create a relation."""
+        initial_count = UserFollows.objects.count()
+
+        response = self.client.post(self.url, {"username": self.user.username})
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(self.url, response["Location"])
+        self.assertEqual(UserFollows.objects.count(), initial_count)
+
+    def test_my_follows_post_existing_follow_shows_info(self):
+        """POST for an already-followed user must not create a duplicate row."""
+        UserFollows.objects.create(user=self.user, followed_user=self.other)
+        initial_count = UserFollows.objects.count()
+
+        response = self.client.post(self.url, {"username": self.other.username})
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(self.url, response["Location"])
+        # No duplicate relation created
+        self.assertEqual(UserFollows.objects.count(), initial_count)
+
+    def test_my_follows_post_creates_follow_when_valid(self):
+        """POST with a valid new username must create a follow relation."""
+        initial_count = UserFollows.objects.count()
+
+        response = self.client.post(self.url, {"username": self.other.username})
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(self.url, response["Location"])
+        self.assertEqual(UserFollows.objects.count(), initial_count + 1)
+
+        self.assertTrue(
+            UserFollows.objects.filter(
+                user=self.user,
+                followed_user=self.other,
+            ).exists()
+        )
+
+
+class UnfollowUserViewTests(TestCase):
+    """Tests for the unfollow_user view (removing follow relations)."""
+
+    def setUp(self):
+        """Create a logged-in user and a second user as an unfollow target."""
+        self.user = User.objects.create_user(
+            username="charlie",
+            password="password123",
+            email="charlie@example.com",
+        )
+        self.other = User.objects.create_user(
+            username="diana",
+            password="password123",
+            email="diana@example.com",
+        )
+        self.client.login(username="charlie", password="password123")
+        self.my_follows_url = reverse("users:my_follows")
+
+    def _unfollow_url(self, user_id):
+        """Use a helper to build the unfollow_user URL for a given user id."""
+        return reverse("users:unfollow", args=[user_id])
+
+    def test_unfollow_user_get_redirects_to_my_follows(self):
+        """GET requests should redirect back to the my_follows page."""
+        response = self.client.get(self._unfollow_url(self.other.id))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(self.my_follows_url, response["Location"])
+
+    def test_unfollow_user_post_for_nonexistent_user_shows_error(self):
+        """POST for a non-existent user should redirect with an error toast."""
+        response = self.client.post(self._unfollow_url(9999))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(self.my_follows_url, response["Location"])
+
+    def test_unfollow_user_post_when_not_following_shows_error(self):
+        """POST when no follow relation exists should redirect with an error."""
+        # target exists, but there is no UserFollows row
+        response = self.client.post(self._unfollow_url(self.other.id))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(self.my_follows_url, response["Location"])
+
+    def test_unfollow_user_post_deletes_relation_and_redirects(self):
+        """POST should delete the follow relation and redirect to my_follows."""
+        relation = UserFollows.objects.create(
+            user=self.user,
+            followed_user=self.other,
+        )
+        self.assertTrue(
+            UserFollows.objects.filter(pk=relation.pk).exists()
+        )
+
+        response = self.client.post(self._unfollow_url(self.other.id))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(self.my_follows_url, response["Location"])
+        self.assertFalse(
+            UserFollows.objects.filter(pk=relation.pk).exists()
+        )
