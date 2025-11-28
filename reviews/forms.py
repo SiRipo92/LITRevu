@@ -19,6 +19,22 @@ class NoColonLabelForm(forms.ModelForm):
 class CreateTicketForm(NoColonLabelForm):
     """Form used to create or update Ticket instances."""
 
+    # Adds author as optional field to form.
+    author = forms.CharField(
+        required=False,
+        label="Auteur",
+        widget=forms.TextInput(
+            attrs={
+                "id": "id_author",
+                "class": (
+                    "w-full mt-4 border border-gray-300 rounded p-2 "
+                    "focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                ),
+            }
+        ),
+        help_text="Laisser vide si l'auteur est inconnu.",
+    )
+
     # Explicitly define the image field to avoid ClearableFileInput
     image = forms.ImageField(
         required=False,
@@ -29,17 +45,19 @@ class CreateTicketForm(NoColonLabelForm):
                 "accept": "image/*",
             }
         ),
-        label="Image",  # keeps the label text consistent if you ever call .label_tag
+        label="Image (optionnelle)",  # keeps the label text consistent if you ever call .label_tag
+        help_text="Ce champ est facultatif."
     )
 
     class Meta:
         """Meta options for CreateTicketForm."""
 
         model = Ticket
-        fields = ["title", "description", "image"]
+        fields = ["title", "author", "description", "image"]
 
         labels = {
             "title": "Titre",
+            "author": "Auteur",
             "description": "Description",
             "image": "Image",
         }
