@@ -47,3 +47,8 @@ pip-wheel-metadata/
 # --- allow flake8 report to be committed (badge + HTML)
 !flake8_report/
 !flake8_report/**
+
+# Coverage reports
+.coverage
+htmlcov/
+coverage.xml
