@@ -217,19 +217,19 @@ Name                                Stmts   Miss Branch BrPart  Cover   Missing
 -------------------------------------------------------------------------------
 reviews/admin.py                       10      0      0      0   100%
 reviews/apps.py                         4      0      0      0   100%
-reviews/forms.py                       32      2      6      1    87%   98-99
-reviews/models.py                      36      3      0      0    92%   36, 78, 90
-reviews/templatetags/card_tags.py      18      1      4      1    91%   51
+reviews/forms.py                       33      2      6      1    87%   129-130
+reviews/models.py                      41      3      0      0    93%   47, 99, 114
+reviews/templatetags/card_tags.py      18      1      4      1    91%   59
 reviews/urls.py                         4      0      0      0   100%
-reviews/views.py                      107     13     30      7    82%   83->92, 85->87, 92->99, 137, 144-150, 166->181, 203-212
+reviews/views.py                      119     18     32      8    80%   57-60, 70, 111->120, 113->115, 120->127, 166, 173-179, 195->210, 232-241
 users/admin.py                         10      0      0      0   100%
 users/apps.py                           4      0      0      0   100%
 users/forms.py                         21      0      0      0   100%
-users/models.py                        14      1      0      0    93%   37
+users/models.py                        14      1      0      0    93%   42
 users/urls.py                           4      0      0      0   100%
-users/views.py                         63      0     18      0   100%
+users/views.py                         75      5     20      1    94%   130-133, 143
 -------------------------------------------------------------------------------
-TOTAL                                 327     20     58      9    91%
+TOTAL                                 357     30     62     11    89%
 
 3 empty files skipped.
 ```
