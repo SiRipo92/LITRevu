@@ -33,7 +33,8 @@ DEBUG = os.getenv("DJANGO_DEBUG", "1") == "1"
 # ALLOWED_HOSTS from env, comma-separated: "localhost,127.0.0.1,litrevu.example.com"
 ALLOWED_HOSTS = os.environ.get(
     "DJANGO_ALLOWED_HOSTS",
-    "localhost,127.0.0.1"
+    "localhost,127.0.0.1",
+    "0.0.0.0"
 ).split(",")
 
 CSRF_TRUSTED_ORIGINS = [
