@@ -49,16 +49,34 @@
       <div class="w-4/5 relative">
         <div class="relative">
           {{ form.password }}
-          <button type="button"
-                  class="absolute right-3 top-3 text-gray-600 hover:text-gray-900"
-                  onclick="togglePassword('id_password', this)">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                 stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-              <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M2.25 12s3.75-6.75 9.75-6.75S21.75 12 21.75 12s-3.75 6.75-9.75 6.75S2.25 12 2.25 12z" />
-              <circle cx="12" cy="12" r="3" />
-            </svg>
-          </button>
+          <button
+            type="button"
+            class="absolute right-3 top-3 text-gray-600 hover:text-gray-900"
+            data-password-toggle
+            data-target="#id_password"
+          >
+           <!-- Eye open (visible by default) -->
+           <span data-eye-show>
+             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                  stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M2.25 12s3.75-6.75 9.75-6.75S21.75 12 21.75 12s-3.75 6.75-9.75 6.75S2.25 12 2.25 12z" />
+                  <circle cx="12" cy="12" r="3" />
+             </svg>
+           </span>
+
+           <!-- Eye closed (hidden initially) -->
+           <span data-eye-hide class="hidden">
+             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                  stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M3.98 8.223A10.477 10.477 0 0 0 2.25 12s3.75 6.75 9.75 6.75
+                      c1.607 0 3.12-.318 4.47-.892M9.53 9.53A3 3 0 0 0 12 15
+                      a3 3 0 0 0 2.47-4.47M6.75 6.75 4.5 4.5m12.75 12.75L19.5 19.5
+                      M5.53 5.53 18.47 18.47" />
+             </svg>
+           </span>
+           </button>
         </div>
 
         {% if form.password.errors %}
