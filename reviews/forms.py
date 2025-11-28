@@ -27,7 +27,7 @@ class CreateTicketForm(NoColonLabelForm):
             attrs={
                 "id": "id_author",
                 "class": (
-                    "w-full mt-4 border border-gray-300 rounded p-2 "
+                    "w-full mt-4 border border-gray-300 rounded p-2 bg-white "
                     "focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                 ),
             }
@@ -66,14 +66,14 @@ class CreateTicketForm(NoColonLabelForm):
             "title": forms.TextInput(
                 attrs={
                     "id": "id_title",
-                    "class": "w-full mt-4 border border-gray-300 rounded p-2 "
+                    "class": "w-full mt-4 border border-gray-300 rounded p-2 bg-white "
                              "focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50",
                 }
             ),
             "description": forms.Textarea(
                 attrs={
                     "id": "id_description",
-                    "class": "w-full mt-4 border border-gray-300 rounded p-2 min-h-[250px] "
+                    "class": "w-full mt-4 border border-gray-300 rounded p-2 min-h-[250px] bg-white "
                              "focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50",
                 }
             ),
@@ -108,10 +108,10 @@ class ReviewForm(NoColonLabelForm):
         }
         widgets = {
             "headline": forms.TextInput(attrs={
-                "class": "border border-gray-300 rounded-md px-4 py-2 w-full"
+                "class": "border border-gray-300 rounded-md px-4 py-2 w-full bg-white"
             }),
             "body": forms.Textarea(attrs={
-                "class": "border border-gray-300 rounded-md px-4 py-2 w-full",
+                "class": "border border-gray-300 rounded-md px-4 py-2 w-full bg-white",
                 "rows": 5
             }),
         }
