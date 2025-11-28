@@ -4,7 +4,9 @@
   "description": "![Flake8](./flake8_report/badge.svg)",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+      "tailwind:dev": "tailwindcss -i ./styles.css -o ./static/css/tailwind.css --watch",
+      "tailwind:build": "tailwindcss -i ./styles.css -o ./static/css/tailwind.css --minify",
+      "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
