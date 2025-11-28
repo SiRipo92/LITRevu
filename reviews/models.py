@@ -48,9 +48,7 @@ class Ticket(models.Model):
 
     @property
     def display_author(self) -> str:
-        """
-        Return the author name, or a default French label if none is provided.
-        """
+        """Return the author name, or a default French label if none is provided."""
         return (self.author or "").strip() or self.DEFAULT_AUTHOR_LABEL
 
     class Meta:
