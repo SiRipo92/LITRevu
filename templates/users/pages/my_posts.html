@@ -1,22 +1,14 @@
 {% extends "base.html" %}
-{% load card_tags %}
+{% load static card_tags %}
 
 {% block title %}Vos Posts{% endblock %}
 
 {% block content %}
-<h1 class="text-blue-600 text-2xl font-semibold text-center w-full my-10">
-  Vos Posts
-</h1>
+<section class="w-[80vw] lg:w-[70vw] mx-auto my-10">
+  <h1 class="text-2xl font-semibold text-gray-800 my-10 justify-self-center">Vos Posts</h1>
 
-<div class="space-y-8 max-w-3xl mx-auto px-4">
-  {% if feed_items %}
-    {% for item in feed_items %}
-      {% render_card_grid item %}
-    {% endfor %}
-  {% else %}
-    <p class="text-gray-500 italic text-center">
-      Aucun post pour le moment.
-    </p>
-  {% endif %}
-</div>
+  <div data-feed-container>
+    {% include "reviews/partials/feed_list.html" %}
+  </div>
+</section>
 {% endblock %}

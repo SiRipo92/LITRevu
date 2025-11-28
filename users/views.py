@@ -4,6 +4,7 @@ from itertools import chain
 
 from django.contrib.auth import get_user_model, logout
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -110,20 +111,36 @@ def unfollow_user(request, user_id):
 @login_required
 def my_posts(request):
     """Display only the current user's tickets and reviews."""
-    user_tickets = Ticket.objects.filter(user=request.user)
-    user_reviews = Review.objects.filter(user=request.user)
+    user = request.user
+
+    tickets = Ticket.objects.filter(user=user)
+    reviews = Review.objects.filter(user=user)
 
     feed_items = sorted(
-        chain(user_tickets, user_reviews),
+        chain(tickets, reviews),
         key=lambda obj: obj.time_created,
         reverse=True,
     )
 
-    return render(
-        request,
-        "users/pages/my_posts.html",
-        {
-            "feed_items": feed_items,
-            "is_my_posts_page": True,
-        },
-    )
+    paginator = Paginator(feed_items, 10)
+    page_number = request.GET.get("page", 1)
+
+    try:
+        page_obj = paginator.page(page_number)
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)
+
+    context = {
+        "feed_items": page_obj.object_list,
+        "page_obj": page_obj,
+        "is_my_posts_page": True,  # template tag depends on this
+    }
+
+    # AJAX: reuse the same partial as the feed
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        return render(request, "reviews/partials/feed_list.html", context)
+
+    # Full page
+    return render(request, "users/pages/my_posts.html", context)
