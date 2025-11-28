@@ -1,26 +1,22 @@
+"""Tests for the Ticket model behaviour."""
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+
 from reviews.models import Ticket
 
 User = get_user_model()
 
 
 class TicketModelTests(TestCase):
-    """
-    Form validation tests for CreateTicketForm.
-
-    These tests verify:
-      • base validity with/without an uploaded image,
-      • required/length constraints on 'title',
-      • label normalization (no trailing colon) and presence of widget attributes
-        used by templates/JS (CSS classes, id, accept, etc.).
-    """
+    """Tests for Ticket string representation and default ordering."""
 
     def test_str_includes_title_and_username(self):
-        """
-        GIVEN a complete payload without an image
-        WHEN the form is constructed and validated
-        THEN the form is valid.
+        """Test that __str__ includes the ticket title and username.
+
+        GIVEN a Ticket instance created for a user,
+        WHEN str() is called on the Ticket,
+        THEN the resulting string contains both the title and the username.
         """
         u = User.objects.create_user(username="alice", password="pass")
         t = Ticket.objects.create(title="Book", description="", user=u)
@@ -28,10 +24,11 @@ class TicketModelTests(TestCase):
         self.assertIn("alice", str(t))
 
     def test_ordering_newest_first(self):
-        """
-        GIVEN a minimal valid payload and a tiny 1×1 GIF uploaded file
-        WHEN the form is validated
-        THEN the form is valid and accepts the image input.
+        """Test that Ticket objects are ordered from newest to oldest.
+
+        GIVEN two Ticket instances created sequentially,
+        WHEN all Ticket objects are retrieved,
+        THEN the most recently created Ticket appears first.
         """
         u = User.objects.create_user(username="alice", password="pass")
         t1 = Ticket.objects.create(title="old", description="", user=u)

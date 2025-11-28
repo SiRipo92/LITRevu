@@ -15,14 +15,16 @@
     <legend class="block mb-2">Note</legend>
 
     {# Add review-rating to scope the custom CSS #}
-    <div class="review-rating w-full ml-4 flex flex-nowrap justify-start gap-8">
+    <ul class="review-rating flex flex-wrap gap-8 md:ml-4 md:w-[70%]">
       {% for sub in review_form.rating %}
-        <label class="inline-flex items-center gap-2">
-          {{ sub.tag }}
-          <span class="whitespace-nowrap">{{ sub.choice_label }}</span>
-        </label>
+        <li>
+          <label class="inline-flex items-center gap-2">
+            {{ sub.tag }}
+            <span class="whitespace-nowrap">{{ sub.choice_label }}</span>
+          </label>
+        </li>
       {% endfor %}
-    </div>
+    </ul>
   </fieldset>
 
   {% for error in review_form.rating.errors %}

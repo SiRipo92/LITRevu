@@ -1,6 +1,8 @@
-from django.contrib.auth import get_user_model
+"""Defines Registration and Login Form logic for landing page and form pages."""
+
 from django import forms
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth import get_user_model
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 
 User = get_user_model()
 
@@ -22,6 +24,7 @@ class RegistrationForm(UserCreationForm):
             username: The unique username for the new account.
             (password1/password2 are inherited from UserCreationForm.)
         """
+
         model = User
         fields = ('username',)  # password1/password2 come from UserCreationForm
 
@@ -59,9 +62,7 @@ class RegistrationForm(UserCreationForm):
 
 
 class LoginForm(AuthenticationForm):
-    """
-    Custom login form with Tailwind CSS styling and placeholders
-    """
+    """Custom login form with Tailwind CSS styling and placeholders."""
 
     remember_me = forms.BooleanField(
         required=False,
@@ -72,6 +73,7 @@ class LoginForm(AuthenticationForm):
     )
 
     def __init__(self, *args, **kwargs):
+        """Initialize the LoginForm."""
         super().__init__(*args, **kwargs)
 
         base_classes = (

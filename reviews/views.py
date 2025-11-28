@@ -1,23 +1,46 @@
-from itertools import chain
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, get_object_or_404, redirect
-from django.utils import timezone
-from django.contrib import messages
-from django.urls import reverse
-from django.http import HttpResponseForbidden
+"""Views for the Reviews app [Feed, Ticket & Review Creation/Modification/Deletion]."""
 
-from .models import Ticket, Review
+from itertools import chain
+
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseForbidden
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+from django.utils import timezone
+
+from LITRevu.utils.toast import redirect_with_toast
+from users.models import UserFollows
+
 from .forms import CreateTicketForm, ReviewForm
+from .models import Review, Ticket
 
 
 @login_required
 def feed(request):
-    tickets = Ticket.objects.all()
-    reviews = Review.objects.all()
+    """Display the main feed for the logged-in user and followed accounts."""
+    user = request.user
 
-    # One unified list of model instances, sorted by time
+    # IDs of users that the logged-in user follows
+    following_ids = UserFollows.objects.filter(
+        user=user
+    ).values_list("followed_user_id", flat=True)
+
+    # Include the user that's logged-in
+    visible_ids = list(following_ids) + [user.id]
+
+    # Only show posts from these users
+    tickets = Ticket.objects.filter(user_id__in=visible_ids)
+    reviews = Review.objects.filter(user_id__in=visible_ids)
+    responses_to_my_tickets = Review.objects.filter(ticket__user=request.user)
+
+    # Merge + sort by creation date
     feed_items = sorted(
-        chain(tickets, reviews),
+        chain(
+            tickets,
+            reviews,
+            responses_to_my_tickets,
+        ),
         key=lambda obj: obj.time_created,
         reverse=True,
     )
@@ -27,7 +50,7 @@ def feed(request):
 
 @login_required
 def create_ticket(request):
-    """Form for 'Demander une critique'."""
+    """Display and handle the 'Demander une critique' ticket creation form."""
     if request.method == "POST":
         ticket_form = CreateTicketForm(request.POST, request.FILES)
         if ticket_form.is_valid():
@@ -51,9 +74,7 @@ def create_ticket(request):
 
 @login_required
 def edit_ticket(request, ticket_id: int):
-    """
-    Edit an existing ticket; keeps, updates, or removes image based on user actions.
-    """
+    """Edit an existing ticket; keeps, updates, or removes image based on user actions."""
     ticket = get_object_or_404(Ticket, pk=ticket_id, user=request.user)
 
     if request.method == "POST":
@@ -73,7 +94,7 @@ def edit_ticket(request, ticket_id: int):
 
         if ticket_form.is_valid():
             ticket_form.save()
-            return redirect(reverse("reviews:posts"))
+            return redirect(reverse("users:my_posts"))
 
     else:
         ticket_form = CreateTicketForm(instance=ticket)
@@ -90,37 +111,11 @@ def edit_ticket(request, ticket_id: int):
 
 @login_required
 def delete_ticket(request, ticket_id):
+    """Delete one of the current user's tickets and redirect to their posts page."""
     ticket = get_object_or_404(Ticket, id=ticket_id, user=request.user)
     ticket.delete()
     messages.success(request, "Le ticket a été supprimé avec succès.")
-    return redirect("reviews:posts")
-
-
-@login_required
-def my_posts(request):
-    """Display only the current user's tickets and reviews."""
-    user_tickets = Ticket.objects.filter(user=request.user)
-    user_reviews = Review.objects.filter(user=request.user)
-
-    feed_items = sorted(
-        chain(user_tickets, user_reviews),
-        key=lambda obj: obj.time_created,
-        reverse=True,
-    )
-
-    return render(
-        request,
-        "reviews/pages/my_posts.html",
-        {
-            "feed_items": feed_items,
-            "is_my_posts_page": True,
-        },
-    )
-
-
-@login_required
-def follows_placeholder(request):
-    return render(request, "placeholders/follows.html")
+    return redirect("users:my_posts")
 
 
 @login_required
@@ -139,7 +134,16 @@ def create_review(request, ticket_id: int | None = None):
     """
     if ticket_id is not None:
         # Response-to-ticket mode
+        # Desactivate 'Create review button' if Review has already been posted for a ticket
         ticket = get_object_or_404(Ticket, pk=ticket_id)
+        # BLOCK review creation for already-reviewed ticket
+        if hasattr(ticket, "review"):
+            return redirect_with_toast(
+                request,
+                "error",
+                "Une critique existe déjà pour ce billet."
+            )
+
         if request.method == "POST":
             form = ReviewForm(request.POST, user=request.user, ticket=ticket)
             if form.is_valid():
@@ -209,7 +213,7 @@ def edit_review(request, review_id: int):
         if form.is_valid():
             form.save()
             messages.success(request, "La critique a été modifiée avec succès.")
-            return redirect(reverse("reviews:posts"))
+            return redirect(reverse("users:my_posts"))
     else:
         form = ReviewForm(
             user=request.user,
@@ -229,6 +233,7 @@ def edit_review(request, review_id: int):
 
 @login_required
 def delete_review(request, review_id):
+    """Delete a review if the current user is its author, otherwise return 403."""
     review = get_object_or_404(Review, id=review_id)
 
     if review.user != request.user:
@@ -236,4 +241,4 @@ def delete_review(request, review_id):
 
     # Delete immediately (no confirmation screen)
     review.delete()
-    return redirect("reviews:posts")
+    return redirect("users:my_posts")

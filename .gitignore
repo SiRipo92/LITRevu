@@ -19,7 +19,7 @@ ENV/
 *.venv
 
 # === Django Static & Media Files ===
-staticfiles/
+static/
 media/
 *.png
 *.jpg

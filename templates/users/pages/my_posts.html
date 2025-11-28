@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% load card_tags %}
+
+{% block title %}Vos Posts{% endblock %}
+
+{% block content %}
+<h1 class="text-blue-600 text-2xl font-semibold text-center w-full my-10">
+  Vos Posts
+</h1>
+
+<div class="space-y-8 max-w-3xl mx-auto px-4">
+  {% if feed_items %}
+    {% for item in feed_items %}
+      {% render_card_grid item %}
+    {% endfor %}
+  {% else %}
+    <p class="text-gray-500 italic text-center">
+      Aucun post pour le moment.
+    </p>
+  {% endif %}
+</div>
+{% endblock %}

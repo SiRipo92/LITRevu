@@ -25,18 +25,30 @@
 
   {% if show_actions %}
     <div class="flex justify-end mt-4 gap-4">
-      {% if allow_review %}
-        <a href="{% url 'reviews:create_review_for_ticket' ticket.id %}"
-           class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition">
-          Créer une critique
-        </a>
-      {% endif %}
-      {% if allow_edit_delete %}
-        <a href="{% url 'reviews:edit_ticket' ticket.id %}"
-           class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Modifier</a>
-        <a href="{% url 'reviews:delete_ticket' ticket.id %}"
-           class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition">Supprimer</a>
-      {% endif %}
-    </div>
-  {% endif %}
+      {# ===== FEED MODE ===== #}
+        {% if not allow_edit_delete %}
+            {% if allow_review %}
+                <a href="{% url 'reviews:create_review' ticket.id %}"
+                   class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+                   Créer une critique
+                </a>
+            {% else %}
+                <span class="text-gray-400 italic">Critique déjà créée</span>
+            {% endif %}
+        {% endif %}
+
+        {# ===== MES POSTS MODE ===== #}
+        {% if allow_edit_delete %}
+          <a href="{% url 'reviews:edit_ticket' ticket.id %}"
+             class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+             Modifier
+          </a>
+          <a href="{% url 'reviews:delete_ticket' ticket.id %}"
+             class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition">
+             Supprimer
+          </a>
+        {% endif %}
+
+      </div>
+    {% endif %}
 </article>

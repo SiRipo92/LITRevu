@@ -22,6 +22,19 @@
 
     {% render_card_grid item %}
 
+    {% empty %}
+    <div class="text-center text-gray-600 mt-10 p-6 border border-gray-300 rounded-lg bg-white">
+      <p class="text-lg mb-4">Aucun contenu n’apparaît dans votre flux pour le moment.</p>
+
+      <p class="mb-2">
+        Abonnez-vous à un autre utilisateur :
+        <a href="{% url 'users:my_follows' %}"
+           class="text-blue-600 hover:underline">
+          page des abonnements
+        </a>
+      </p>
+    </div>
+
   {% endfor %}
 </div>
 {% endblock %}

@@ -13,7 +13,7 @@
 
   <h3 class="text-lg font-semibold text-gray-900 mb-1">
     {{ review.headline }}
-    {% include "reviews/components/stars.html" with value=review.rating only %}
+    {% include "reviews/components/stars.html" with value=review.rating %}
   </h3>
 
   {% if review.body %}
@@ -23,7 +23,7 @@
   {% if show_ticket %}
     <div class="mt-4 border rounded p-4">
       <p class="text-sm text-gray-600 mb-2">En réponse à :</p>
-      {% include "reviews/components/ticket_card.html" with ticket=review.ticket request=request show_actions=False only %}
+      {% include "reviews/components/ticket_card.html" with ticket=review.ticket request=request show_actions=False %}
     </div>
   {% endif %}
 

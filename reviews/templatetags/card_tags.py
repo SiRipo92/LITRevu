@@ -1,8 +1,16 @@
+"""
+Custom template tags for rendering ticket and review cards in the feed.
+
+Defines the ``render_card_grid`` tag, which selects the appropriate card
+template for Ticket or Review instances and adapts actions based on the
+current page context (flux vs. "Mes Posts").
+"""
+
 from django import template
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 
-from reviews.models import Ticket, Review
+from reviews.models import Review, Ticket
 
 register = template.Library()
 
@@ -19,14 +27,19 @@ def render_card_grid(context, item):
     is_my_posts_page = context.get("is_my_posts_page", False)
 
     if isinstance(item, Ticket):
+        has_review = Review.objects.filter(ticket=item).exists()
+
+        allow_review = (not is_my_posts_page and not has_review)
+
         html = render_to_string(
             "reviews/components/ticket_card.html",
             {
                 "ticket": item,
                 "request": request,
-                "show_actions": True,                      # base actions zone
-                "allow_review": not is_my_posts_page,      # feed: True, my posts: False
-                "allow_edit_delete": is_my_posts_page,     # feed: False, my posts: True
+                "show_actions": True,
+                "allow_review": allow_review,
+                "has_review": has_review,
+                "allow_edit_delete": is_my_posts_page,
             },
         )
         return mark_safe(html)

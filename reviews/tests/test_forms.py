@@ -1,5 +1,8 @@
+"""Tests behavior for Ticket form."""
+
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
+
 from reviews.forms import CreateTicketForm
 
 
