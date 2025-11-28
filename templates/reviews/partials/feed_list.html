@@ -1,0 +1,55 @@
+{% load card_tags %}
+
+<div class="space-y-6 w-full">
+  {% for item in feed_items %}
+    {% render_card_grid item %}
+  {% empty %}
+    <p class="text-gray-500">Aucun contenu à afficher.</p>
+  {% endfor %}
+</div>
+
+{% if page_obj.paginator.num_pages > 1 %}
+  <nav class="mt-8 flex justify-center" aria-label="Pagination">
+    <ul class="inline-flex items-center gap-2">
+
+      {% if page_obj.has_previous %}
+        <li>
+          <a href="?page={{ page_obj.previous_page_number }}"
+             data-page-link
+             class="px-3 py-1 border rounded hover:bg-blue-50">
+            &laquo; Précédent
+          </a>
+        </li>
+      {% endif %}
+
+      {% for num in page_obj.paginator.page_range %}
+        {% if num == page_obj.number %}
+          <li>
+            <span class="px-3 py-1 rounded bg-blue-600 text-white">
+              {{ num }}
+            </span>
+          </li>
+        {% else %}
+          <li>
+            <a href="?page={{ num }}"
+               data-page-link
+               class="px-3 py-1 border rounded hover:bg-blue-50">
+              {{ num }}
+            </a>
+          </li>
+        {% endif %}
+      {% endfor %}
+
+      {% if page_obj.has_next %}
+        <li>
+          <a href="?page={{ page_obj.next_page_number }}"
+             data-page-link
+             class="px-3 py-1 border rounded hover:bg-blue-50">
+            Suivant &raquo;
+          </a>
+        </li>
+      {% endif %}
+
+    </ul>
+  </nav>
+{% endif %}

@@ -4,6 +4,7 @@ from itertools import chain
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import Q
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
@@ -38,7 +39,7 @@ def feed(request):
     #   - OR any review that answers one of the user's tickets
     reviews = Review.objects.filter(
         Q(user_id__in=visible_ids) | Q(ticket__user=user)
-    )
+    ).distinct()
 
     # Merge + sort by creation date (newest first)
     feed_items = sorted(
@@ -47,7 +48,29 @@ def feed(request):
         reverse=True,
     )
 
-    return render(request, "reviews/pages/feed.html", {"feed_items": feed_items})
+    # ---- Pagination (10 items per page) ----
+    paginator = Paginator(feed_items, 10)
+    page_number = request.GET.get("page", 1)
+
+    try:
+        page_obj = paginator.page(page_number)
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)
+
+    context = {
+        "feed_items": page_obj.object_list,
+        "page_obj": page_obj,
+        # is_my_posts_page is False by default in template tag
+    }
+
+    # AJAX requests get only the cards + pagination controls (partial)
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        return render(request, "reviews/partials/feed_list.html", context)
+
+    # Normal full-page render
+    return render(request, "reviews/pages/feed.html", context)
 
 
 @login_required

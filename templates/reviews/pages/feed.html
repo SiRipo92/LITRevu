@@ -4,37 +4,25 @@
 {% block title %}Flux{% endblock %}
 
 {% block content %}
-<h1 class="hidden">Flux</h1>
+  {# Keep your hidden H1 for accessibility #}
+  <h1 class="hidden">Flux</h1>
 
-<div class="flux-btns__container flex flex-col md:flex-row justify-between gap-6 my-10">
-  <a href="{% url 'reviews:create_ticket' %}"
-     class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 md:min-w-[220px] text-center transition">
-    Demander une critique
-  </a>
-  <a href="{% url 'reviews:create_review' %}"
-     class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 md:min-w-[220px] text-center transition">
-    Créer une critique
-  </a>
-</div>
+  <div class="flux-btns__container flex flex-col md:flex-row justify-between gap-6 my-10">
+    <a href="{% url 'reviews:create_ticket' %}"
+       class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 md:min-w-[220px] text-center transition">
+      Demander une critique
+    </a>
+    <a href="{% url 'reviews:create_review' %}"
+       class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 md:min-w-[220px] text-center transition">
+      Créer une critique
+    </a>
+  </div>
 
-<div class="space-y-8 w-[90%] xl:w-[70%]">
-  {% for item in feed_items %}
-
-    {% render_card_grid item %}
-
-    {% empty %}
-    <div class="text-center text-gray-600 mt-10 p-6 border border-gray-300 rounded-lg bg-white">
-      <p class="text-lg mb-4">Aucun contenu n’apparaît dans votre flux pour le moment.</p>
-
-      <p class="mb-2">
-        Abonnez-vous à un autre utilisateur :
-        <a href="{% url 'users:my_follows' %}"
-           class="text-blue-600 hover:underline">
-          page des abonnements
-        </a>
-      </p>
-    </div>
-
-  {% endfor %}
-</div>
+  {# This wrapper is the ONLY new thing: used by JS to replace list via AJAX #}
+  <section class="w-[80vw] lg:w-[70vw]">
+      <h2 class="hidden">Card Grid</h2>
+      <div data-feed-container>
+        {% include "reviews/partials/feed_list.html" %}
+      </div>
+  </section>
 {% endblock %}
