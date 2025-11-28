@@ -28,7 +28,7 @@ SECRET_KEY = os.environ.get(
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG: 1 = True, anything else = False
-DEBUG = os.environ.get("DJANGO_DEBUG", "1") == "1"
+DEBUG = os.getenv("DJANGO_DEBUG", "1") == "1"
 
 # ALLOWED_HOSTS from env, comma-separated: "localhost,127.0.0.1,litrevu.example.com"
 ALLOWED_HOSTS = os.environ.get(
@@ -144,7 +144,26 @@ STATICFILES_DIRS = [
 # Production output for collectstatic
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+if DEBUG:
+    # Dev / tests: simple storage, no manifest, uses STATICFILES_DIRS
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+else:
+    # Production: Whitenoise + compressed manifest
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
 
 # Media files (user uploads)
 MEDIA_URL = "/media/"
