@@ -1,9 +1,21 @@
-{# Fields for Ticket (title, description, image). Expects: ticket_form, editing (bool) #}
+{# Fields for Ticket (title, author, description, image). Expects: ticket_form, editing (bool) #}
 
 <div class="my-4">
   {{ ticket_form.title.label_tag }}
   {{ ticket_form.title }}
   {% for error in ticket_form.title.errors %}
+    <p class="text-red-600 text-md">{{ error }}</p>
+  {% endfor %}
+</div>
+
+<div class="my-4">
+  {{ ticket_form.author.label_tag }}
+  <span class="text-gray-500 text-sm ml-1">(facultatif)</span>
+  {{ ticket_form.author }}
+  {% if ticket_form.author.help_text %}
+    <p class="text-gray-500 text-sm mt-1">{{ ticket_form.author.help_text }}</p>
+  {% endif %}
+  {% for error in ticket_form.author.errors %}
     <p class="text-red-600 text-md">{{ error }}</p>
   {% endfor %}
 </div>
@@ -17,7 +29,9 @@
 </div>
 
 <div data-image-upload-section class="mt-4">
-  <label class="block mb-2">Image</label>
+  <label class="block mb-2">Image
+      <span class="text-gray-500 text-sm ml-1">(facultative)</span>
+  </label>
 
   {% if editing and ticket_form.instance.image %}
     <div data-current-image class="mb-4">

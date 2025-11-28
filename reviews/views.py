@@ -4,6 +4,7 @@ from itertools import chain
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -31,16 +32,17 @@ def feed(request):
 
     # Only show posts from these users
     tickets = Ticket.objects.filter(user_id__in=visible_ids)
-    reviews = Review.objects.filter(user_id__in=visible_ids)
-    responses_to_my_tickets = Review.objects.filter(ticket__user=request.user)
 
-    # Merge + sort by creation date
+    # Reviews:
+    #   - from the user + followed users
+    #   - OR any review that answers one of the user's tickets
+    reviews = Review.objects.filter(
+        Q(user_id__in=visible_ids) | Q(ticket__user=user)
+    )
+
+    # Merge + sort by creation date (newest first)
     feed_items = sorted(
-        chain(
-            tickets,
-            reviews,
-            responses_to_my_tickets,
-        ),
+        chain(tickets, reviews),
         key=lambda obj: obj.time_created,
         reverse=True,
     )

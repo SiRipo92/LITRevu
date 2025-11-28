@@ -18,8 +18,16 @@ class Ticket(models.Model):
     - time_created: Auto timestamp for when the ticket is created
     """
 
+    DEFAULT_AUTHOR_LABEL = "Auteur inconnu"
+
     # Defines the data for a Ticket
     title = models.CharField(max_length=128)
+    author = models.CharField(
+        "Auteur",
+        max_length=128,
+        blank=True,
+        help_text="Nom de l'auteur du livre ou de l'article (facultatif).",
+    )
     description = models.TextField(max_length=2048, blank=True)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -37,6 +45,11 @@ class Ticket(models.Model):
     def display_title(self) -> str:
         """Title used in the feed."""
         return self.title
+
+    @property
+    def display_author(self) -> str:
+        """Return the author name, or a default French label if none is provided."""
+        return (self.author or "").strip() or self.DEFAULT_AUTHOR_LABEL
 
     class Meta:
         """Django metadata options for the Ticket model."""

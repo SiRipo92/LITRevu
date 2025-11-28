@@ -17,6 +17,12 @@
 This project is built as part of the OpenClassrooms Python Developer program.
 It represents the **Minimum Viable Product (MVP)** of a platform where users can exchange literary and article critiques.
 
+### Compte superutilisateur (administration Django)
+
+- URL admin : http://localhost:8000/admin/
+- Nom d’utilisateur : oc_admin
+- Mot de passe : OpenClassrooms_Evaluator!*
+
 ## Project Structure
 ```bash
 LITRevu/
