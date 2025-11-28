@@ -1,9 +1,10 @@
 """Defines Behavior of User Views to register, logout, follow/unfollow and for user posts."""
 
 from itertools import chain
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+
 from django.contrib.auth import get_user_model, logout
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -109,6 +110,7 @@ def unfollow_user(request, user_id):
 
 @login_required
 def my_posts(request):
+    """Display only the current user's tickets and reviews."""
     user = request.user
 
     tickets = Ticket.objects.filter(user=user)
