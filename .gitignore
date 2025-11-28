@@ -16,14 +16,6 @@ ENV/
 *.env
 *.venv
 
-# === Django Static & Media Files ===
-static/
-media/
-*.png
-*.jpg
-*.jpeg
-*.gif
-*.webp
 
 # === IDEs & Editors ===
 .vscode/
