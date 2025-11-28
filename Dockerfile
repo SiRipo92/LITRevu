@@ -29,6 +29,9 @@ COPY . .
 # 4) Build Tailwind CSS (uses the script you defined in package.json)
 RUN npm run tailwind:build
 
+# 🔑 NEW: run database migrations (SQLite) at build time
+RUN python manage.py migrate --noinput
+
 # 5) Collect static files into STATIC_ROOT (staticfiles/)
 RUN python manage.py collectstatic --noinput
 
