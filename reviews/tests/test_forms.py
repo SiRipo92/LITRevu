@@ -52,7 +52,7 @@ class CreateTicketFormTests(TestCase):
         # No trailing colon on labels
         self.assertEqual(form.fields["title"].label, "Titre")
         self.assertEqual(form.fields["description"].label, "Description")
-        self.assertEqual(form.fields["image"].label, "Image")
+        self.assertEqual(form.fields["image"].label, "Image (optionnelle)")
 
         # CSS classes present (spot-check one per field)
         self.assertIn("w-full", form.fields["title"].widget.attrs.get("class", ""))
