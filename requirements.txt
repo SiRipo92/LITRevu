@@ -5,10 +5,12 @@ certifi==2025.10.5
 chardet==5.2.0
 charset-normalizer==3.4.4
 click==8.3.0
+cloudinary==1.44.1
 colorama==0.4.6
 cookiecutter==2.6.0
 coverage==7.11.0
 Django==4.2.16
+django-cloudinary-storage==0.3.0
 flake8==7.3.0
 green==4.0.2
 gunicorn==23.0.0
