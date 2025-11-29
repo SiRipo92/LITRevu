@@ -13,7 +13,7 @@ import os
 from pathlib import Path
 
 # Detect whether it's being used on Render or in Dev Mode (For Image Storage)
-IS_RENDER = os.getenv("RENDER", False)
+IS_RENDER = os.getenv("RENDER") is not None
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -148,6 +148,9 @@ STATICFILES_DIRS = [
 # Production output for collectstatic
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
+# -----------------------------------------------------------------------------
+# STATIC FILE STORAGE
+# -----------------------------------------------------------------------------
 if DEBUG:
     # Dev / tests: simple storage, no manifest, uses STATICFILES_DIRS
     STORAGES = {
@@ -213,7 +216,7 @@ LOGGING = {
 }
 
 # -----------------------------------------------------------------------------
-# LOCAL MEDIA (DEFAULT)
+# LOCAL MEDIA (DEFAULT FOR DEVELOPMENT)
 # -----------------------------------------------------------------------------
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
@@ -227,10 +230,12 @@ if IS_RENDER:
         'cloudinary_storage',
     ]
 
-    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-
     CLOUDINARY_STORAGE = {
         'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
         'API_KEY': os.getenv('CLOUDINARY_API_KEY'),
         'API_SECRET': os.getenv('CLOUDINARY_API_SECRET'),
+    }
+
+    STORAGES["default"] = {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     }
