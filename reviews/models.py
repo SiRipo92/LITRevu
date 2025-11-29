@@ -105,8 +105,7 @@ class Review(models.Model):
         verbose_name_plural = "Reviews"
         ordering = ['-id']
         constraints = [
-            UniqueConstraint(fields=['user', 'ticket'], name='unique_review_per_user_ticket'),
-            models.UniqueConstraint(fields=["ticket"], name="unique_review_per_ticket")
+            UniqueConstraint(fields=['user', 'ticket'], name='unique_review_per_user_ticket')
         ]
 
     def __str__(self):
