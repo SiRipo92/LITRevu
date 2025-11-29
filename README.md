@@ -1,25 +1,114 @@
-# LITRevu — Django Web Application
+# 📘 LITRevu — Django Web Application
 
 ![Flake8](./flake8_report/badge.svg)
 
-* **Author:** Sierra Ripoche
-* **Project:** Développez une application Web en utilisant Django — OpenClassrooms
-* **Framework:** Django 4.2.16
-* **Database:** SQLite (local development)
+## 📄 Project Information
 
-## Overview
-**LITRevu** is a Django-based web application that allows a community of users to:
+* **Author :** Sierra Ripoche
+* **OpenClassrooms Project :** Développez une application Web en utilisant Django (Projet 9)
+* **Framework :** Django 4.2.16
+* **Python Version :** 3.11
+* **Database :** SQLite
+* **Image Storage (Production) :** Cloudinary API
+* **Hosting :** Render.com (Dockerized deployment via GitHub)
+* **Frontend Styling :** TailwindCSS
+* **WSGI Server (Production) :** Gunicorn
+* **Static File Handling :** Whitenoise + Cloudinary (media)
+* **Continuous Integration :** GitHub Actions (linting + tests)
 
-- Request reviews for books or articles.
-- Publish their own reviews.
-- Follow other users and view their activity feed.
+## 🧭 Overview
+**LITRevu** is a full-stack Django web application designed as a social platform for literary exchange.
+The goal of this project is to build a functional MVP that simulates a small community where users can:
 
-This project is built as part of the OpenClassrooms Python Developer program.
-It represents the **Minimum Viable Product (MVP)** of a platform where users can exchange literary and article critiques.
+-  **Créer des tickets** pour demander une critique d’un livre ou d’un article 
+-  **Publier des critiques** en réponse à des tickets ou indépendamment 
+-  **Suivre d’autres utilisateurs** pour constituer un flux personnalisé (page Flux)
+-  **Consulter un fil d’actualité** regroupant les publications des utilisateurs suivis 
+-  **Gérer leur activité** (leurs tickets, leurs critiques, leurs abonnements)
+
+This MVP integrates authentication, content creation, user interactions, and a dynamic feed system, following Django best practices and modular app design.
+It showcases clean URL routing, a clear separation of concerns between apps (`reviews` and `users), and a professional deployment pipeline emulating real-world production constraints.
+
+## 🛠️ Technical Scope & Development Workflow
+This project goes beyond a basic MVP and demonstrates a real engineering workflow:
+
+### ✔️ Modular Architecture
+
+- Two dedicated Django apps:
+  - reviews (Tickets, Reviews, Feed logic)
+  - users (Authentication, user following system, permissions)
+- Clean separation between models, forms, views, templates, and static assets.
+
+### ✔️ DRY & Component-Based Templating
+To maintain consistency and avoid duplication across the application, the entire UI is built following Django’s template inheritance and componentization principles:
+
+- A single `base.html` defines global layout, navigation, structure, and TailwindCSS imports.
+
+- Reusable partials and components (e.g. headers, forms, ticket blocks, review cards) are placed into dedicated template includes.
+
+- Templates extend from shared structures to keep views lean and focused on unique content.
+
+- Shared UI patterns through Tailwind classes are reused throughout the project.
+
+### ✔️ Modern Frontend Integration
+- TailwindCSS for styling and utility-first component design
+- Custom responsive layout adapted to the project’s template constraints
+
+### ✔️ Cloud-Ready Production Setup
+- Dockerized environment for consistent dev/prod parity
+
+- Render.com hosting with persistent database volume
+
+- Cloudinary API for media storage to avoid local filesystem loss on deploy
+
+- Gunicorn + Whitenoise for performant static/media handling
+
+### ✔️ CI/CD & Code Quality
+- **GitHub Actions** pipeline triggered on every push or pull request to main, running two independent jobs:
+  - **Linting job :**
+    - Executes Flake8 with strict settings
+    - Generates an HTML report + a badge displayed in the README
+    - Fails the pipeline if linting errors are found
+  - **Testing job :**
+    - Runs Django’s built-in test runner (manage.py test)
+    - Measures coverage using the coverage package
+    - Generates XML and HTML coverage reports (uploaded as CI artifacts)
+- While no strict coverage threshold is enforced automatically, the project maintains a **self-imposed target of ≥ 80% coverage**, in line with industry recommendations (e.g., IBM).
+- Automated commits update the Flake8 badge whenever linting results change.
+- `.flake8` + `isort rules ensure consistent code formatting across the whole codebase.
+
+### ✔️ Agile Workflow & Version Tracking
+
+- Full **Kanban board** (GitLab Projects) documenting:
+  - User stories (with Gherkin templates)
+- All feature branches kept visible to show incremental development 
+- Frequent commits, atomic feature delivery, and structured merges
+
+## Note to the Evaluator — Testing the *Flux* and *Abonnements* Features
+
+When you log into the application with the credentials provided, your *Flux* (Feed) will initially appear empty. This is expected, as the feed only displays content from users you follow.
+
+To allow you to fully test the **Abonnements** (Following) system and observe how the feed updates when following other users, I have created several test accounts.  
+You may follow any of the usernames listed below; they can contain tickets and reviews used for demonstration purposes.
+
+### 👥 Test Accounts
+- AnaBanana  
+- BubbasTheBunny  
+- LovingBunny92  
+- SiAerial90  
+- SierraAdmin  
+- SisiRipo  
+- TestingAccount
+
+Following one or more of these accounts will immediately populate your feed with their activity, allowing you to validate the functionality of:
+- user following/unfollowing,
+- feed updates and dynamic features tied into the feed (review buttons/messages in response to a ticket),
+- ticket and review visibility from subscribed users.
 
 ### Compte superutilisateur (administration Django)
 
-- URL admin : http://localhost:8000/admin/
+- URL admin (if run locally): http://localhost:8000/admin/
+  - OR (if testing from deployed PROD app): https://litrevu-735d.onrender.com/admin
 - Nom d’utilisateur : oc_admin
 - Mot de passe : OpenClassrooms_Evaluator!*
 
