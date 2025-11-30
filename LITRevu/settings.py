@@ -17,7 +17,9 @@ USE_CLOUDINARY = os.getenv("CLOUDINARY_CLOUD_NAME") is not None
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-DB_DIR = os.getenv("DB_DIR", BASE_DIR)
+
+# Use DB_DIR if defined (Render), otherwise fall back to BASE_DIR (local dev)
+DB_DIR = Path(os.environ.get("DB_DIR", BASE_DIR))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
