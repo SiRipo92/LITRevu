@@ -91,7 +91,7 @@ def create_ticket(request):
         request,
         "reviews/forms/submit_ticket.html",
         {
-            "ticket_form": ticket_form,  # <- key your include expects
+            "ticket_form": ticket_form,  # <- passes the ticket form the view expects
             "editing": False,  # used by the component to show existing image
         },
     )
@@ -102,6 +102,7 @@ def edit_ticket(request, ticket_id: int):
     """Edit an existing ticket; keeps, updates, or removes image based on user actions."""
     ticket = get_object_or_404(Ticket, pk=ticket_id, user=request.user)
 
+    # If user wishes to modify a ticket and clicks 'Modifier'
     if request.method == "POST":
         ticket_form = CreateTicketForm(request.POST, request.FILES, instance=ticket)
 
@@ -121,6 +122,7 @@ def edit_ticket(request, ticket_id: int):
             ticket_form.save()
             return redirect(reverse("users:my_posts"))
 
+    # Else user wishes to delete form
     else:
         ticket_form = CreateTicketForm(instance=ticket)
 
@@ -128,7 +130,7 @@ def edit_ticket(request, ticket_id: int):
         request,
         "reviews/forms/submit_ticket.html",
         {
-            "ticket_form": ticket_form,
+            "ticket_form": ticket_form,     # <- passes the ticket form the view expects
             "editing": True,
         },
     )
