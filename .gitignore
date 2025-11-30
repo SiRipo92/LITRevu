@@ -27,9 +27,6 @@ ENV/
 .DS_Store
 Thumbs.db
 
-# === Migrations Cache (optional, if you want to recreate DB cleanly later) ===
-*/migrations/__pycache__/
-*/migrations/*.py
 
 # === Byte-compiled files ===
 *.egg
