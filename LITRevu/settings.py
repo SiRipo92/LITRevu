@@ -13,7 +13,7 @@ import os
 from pathlib import Path
 
 # Detect whether it's being used on Render or in Dev Mode (For Image Storage)
-IS_RENDER = os.getenv("RENDER") is not None
+USE_CLOUDINARY = os.getenv("CLOUDINARY_CLOUD_NAME") is not None
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -224,7 +224,7 @@ MEDIA_ROOT = BASE_DIR / "media"
 # -----------------------------------------------------------------------------
 # CLOUDINARY (ONLY ON RENDER)
 # -----------------------------------------------------------------------------
-if IS_RENDER:
+if USE_CLOUDINARY:
     INSTALLED_APPS += [
         'cloudinary',
         'cloudinary_storage',
