@@ -32,17 +32,11 @@ COPY . .
 # 4) Build Tailwind CSS (uses the script you defined in package.json)
 RUN npm run tailwind:build
 
-# 🔑 NEW: run database migrations (SQLite) at build time
-RUN python manage.py migrate --noinput
-
 # 5) Collect static files into STATIC_ROOT (staticfiles/)
 RUN python manage.py collectstatic --noinput
 
 # Expose the port Gunicorn will listen on
 EXPOSE 8000
-
-# Default environment; you override in production with DJANGO_DEBUG=0
-ENV DJANGO_DEBUG=0
 
 # Don't reset DJANGO_DEBUG here; Render will override if needed
 CMD ["sh", "-c", "gunicorn LITRevu.wsgi:application --bind 0.0.0.0:${PORT:-8000}"]

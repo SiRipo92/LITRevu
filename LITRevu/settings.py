@@ -12,14 +12,12 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from pathlib import Path
 
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
 # -----------------------------------------------------------------------------
 # BASE / ENV
 # -----------------------------------------------------------------------------
-BASE_DIR = Path(__file__).resolve().parent.parent
-
-# DEBUG: 1 = True, anything else = False
-DEBUG = os.getenv("DJANGO_DEBUG", "1") == "1"
-
 # Secret key
 SECRET_KEY = os.environ.get(
     "DJANGO_SECRET_KEY",
@@ -39,10 +37,27 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 # -----------------------------------------------------------------------------
-# MEDIA STORAGE MODE (LOCAL DEV vs CLOUDINARY PROD)
+# ENVIRONMENT (explicit) + DEBUG (separate concern)
 # -----------------------------------------------------------------------------
-# Only use Cloudinary in production (DEBUG=False) AND if env vars exist
-USE_CLOUDINARY = (not DEBUG) and (os.getenv("CLOUDINARY_CLOUD_NAME") is not None)
+DJANGO_ENV = os.getenv("DJANGO_ENV", "local").lower()   # local | production
+IS_PRODUCTION = DJANGO_ENV == "production"
+
+DEBUG = os.getenv("DJANGO_DEBUG", "1") == "1"
+
+# -----------------------------------------------------------------------------
+# MEDIA STORAGE MODE (explicit)
+# -----------------------------------------------------------------------------
+cloudinary_enabled_flag = os.getenv("USE_CLOUDINARY", "0") == "1"
+cloudinary_has_creds = all(
+    os.getenv(k)
+    for k in (
+        "CLOUDINARY_CLOUD_NAME",
+        "CLOUDINARY_API_KEY",
+        "CLOUDINARY_API_SECRET",
+    )
+)
+
+USE_CLOUDINARY = IS_PRODUCTION and cloudinary_enabled_flag and cloudinary_has_creds
 
 # -----------------------------------------------------------------------------
 # APPS

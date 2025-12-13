@@ -10,5 +10,5 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      # Keep SQLite DB on host so it survives rebuilds
       - ./db.sqlite3:/app/db.sqlite3
+      - ./media:/app/media
