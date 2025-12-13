@@ -15,6 +15,7 @@
 * **WSGI Server (Production) :** Gunicorn
 * **Static File Handling :** Whitenoise + Cloudinary (media)
 * **Continuous Integration :** GitHub Actions (linting + tests)
+* **Deployed Site URL :** https://litrevu-735d.onrender.com
 
 ## 🧭 Overview
 **LITRevu** is a full-stack Django web application designed as a social platform for literary exchange.
