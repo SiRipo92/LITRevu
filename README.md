@@ -106,12 +106,6 @@ Following one or more of these accounts will immediately populate your feed with
 - feed updates and dynamic features tied into the feed (review buttons/messages in response to a ticket),
 - ticket and review visibility from subscribed users.
 
-### Compte superutilisateur (administration Django)
-
-- URL admin (if run locally): http://localhost:8000/admin/
-  - OR (if testing from deployed PROD app): https://litrevu-735d.onrender.com/admin
-- Nom d’utilisateur : oc_admin
-- Mot de passe : OpenClassrooms_Evaluator!*
 
 ## Project Structure
 ```bash
