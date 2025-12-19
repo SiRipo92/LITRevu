@@ -41,6 +41,7 @@ def render_card_grid(context, item):
                 "has_review": has_review,
                 "allow_edit_delete": is_my_posts_page,
             },
+            request=request,
         )
         return mark_safe(html)
 
@@ -53,6 +54,7 @@ def render_card_grid(context, item):
                 "show_ticket": True,
                 "allow_edit_delete": is_my_posts_page,     # only on "Mes Posts"
             },
+            request=request,
         )
         return mark_safe(html)
 

@@ -1,9 +1,16 @@
 """Define models for Ticket and Review within Reviews app."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import UniqueConstraint
+
+if TYPE_CHECKING:
+    from django.contrib.auth.models import AbstractBaseUser
 
 
 class Ticket(models.Model):
@@ -50,6 +57,10 @@ class Ticket(models.Model):
     def display_author(self) -> str:
         """Return the author name, or a default French label if none is provided."""
         return (self.author or "").strip() or self.DEFAULT_AUTHOR_LABEL
+
+    def is_closed_for(self, user: "AbstractBaseUser") -> bool:
+        """Per-user rule: True if THIS user already has a review for THIS ticket."""
+        return self.reviews.filter(user=user).exists()
 
     class Meta:
         """Django metadata options for the Ticket model."""
@@ -103,7 +114,7 @@ class Review(models.Model):
 
         verbose_name = "Review"
         verbose_name_plural = "Reviews"
-        ordering = ['-id']
+        ordering = ["-time_created"]
         constraints = [
             UniqueConstraint(fields=['user', 'ticket'], name='unique_review_per_user_ticket')
         ]

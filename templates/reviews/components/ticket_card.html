@@ -31,7 +31,7 @@
       {# ===== FEED MODE ===== #}
         {% if not allow_edit_delete %}
             {% if allow_review %}
-                <a href="{% url 'reviews:create_review' ticket.id %}"
+                <a href="{% url 'reviews:create_review_for_ticket' ticket.id %}"
                    class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
                    Créer une critique
                 </a>
@@ -41,16 +41,22 @@
         {% endif %}
 
         {# ===== MES POSTS MODE ===== #}
-        {% if allow_edit_delete %}
-          <a href="{% url 'reviews:edit_ticket' ticket.id %}"
-             class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
-             Modifier
-          </a>
-          <a href="{% url 'reviews:delete_ticket' ticket.id %}"
-             class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition">
-             Supprimer
-          </a>
-        {% endif %}
+          {% if allow_edit_delete %}
+            <a href="{% url 'reviews:edit_ticket' ticket.id %}"
+               class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+               Modifier
+            </a>
+
+            <form method="post"
+                  action="{% url 'reviews:delete_ticket' ticket.id %}"
+                  onsubmit="return confirm('Supprimer ce ticket ?');">
+              {% csrf_token %}
+              <button type="submit"
+                      class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition">
+                Supprimer
+              </button>
+            </form>
+          {% endif %}
 
       </div>
     {% endif %}

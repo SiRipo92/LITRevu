@@ -125,13 +125,12 @@ class ReviewForm(NoColonLabelForm):
     def clean(self):
         """Run default validation and ensure the user has not already reviewed the ticket."""
         data = super().clean()
-        if self.user and self.ticket:
-            # Base queryset: same user & same ticket
-            qs = Review.objects.filter(user=self.user, ticket=self.ticket)
-            # If we're editing an existing review, ignore *this* instance
+
+        if self.ticket:
+            qs = Review.objects.filter(ticket=self.ticket)
             if self.instance.pk:
-                qs = qs.exclude(pk=self.instance.pk)
+                qs = qs.exclude(pk=self.instance.pk)    # allow editing this review
             if qs.exists():
-                raise ValidationError("Vous avez déjà publié une critique pour ce ticket.")
+                raise ValidationError("Une critique existe déjà pour ce ticket.")
 
         return data

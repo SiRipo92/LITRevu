@@ -28,16 +28,22 @@
   {% endif %}
 
   {# Buttons only on "Mes Posts" (allow_edit_delete=True) #}
-  {% if allow_edit_delete %}
-    <div class="flex justify-end mt-4 gap-4">
-        <a href="{% url 'reviews:edit_review' review.id %}"
-           class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
-            Modifier
-        </a>
-        <a href="{% url 'reviews:delete_review' review.id %}"
-           class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition">
-            Supprimer
-        </a>
-    </div>
-    {% endif %}
+      {% if allow_edit_delete %}
+          <div class="flex justify-end mt-4 gap-4">
+            <a href="{% url 'reviews:edit_review' review.id %}"
+               class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+                Modifier
+            </a>
+
+            <form method="post"
+                  action="{% url 'reviews:delete_review' review.id %}"
+                  onsubmit="return confirm('Supprimer cette critique ?');">
+              {% csrf_token %}
+              <button type="submit"
+                      class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition">
+                Supprimer
+              </button>
+            </form>
+          </div>
+      {% endif %}
 </article>

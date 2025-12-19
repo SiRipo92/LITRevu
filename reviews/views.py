@@ -1,15 +1,22 @@
 """Views for the Reviews app [Feed, Ticket & Review Creation/Modification/Deletion]."""
 
+from __future__ import annotations
+
 from itertools import chain
+from typing import Any, TypeAlias, cast
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
-from django.db.models import Q
-from django.http import HttpResponseForbidden
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.messages.views import SuccessMessageMixin
+from django.core.paginator import EmptyPage, Page, PageNotAnInteger, Paginator
+from django.db import IntegrityError, transaction
+from django.db.models import Q, QuerySet
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse
-from django.utils import timezone
+from django.urls import reverse, reverse_lazy
+from django.views import View
+from django.views.generic import CreateView, DeleteView, UpdateView
 
 from LITRevu.utils.toast import redirect_with_toast
 from users.models import UserFollows
@@ -17,255 +24,309 @@ from users.models import UserFollows
 from .forms import CreateTicketForm, ReviewForm
 from .models import Review, Ticket
 
+FeedItem: TypeAlias = Ticket | Review
+
+# --------- HELPER MIXINS FOR TICKET AND REVIEW FORMS TO GET CONTEXT
+
+
+class TicketFormContextMixin:
+    """Expose template-friendly context for Ticket forms.
+
+    This mixin normalizes context keys to match existing templates:
+    - Provides `ticket_form` (instead of the generic `form` key).
+    - Provides an `editing` boolean flag used by templates.
+    """
+
+    editing: bool = False
+
+    def get_context_data(self, **kwargs):
+        """Return context data with Ticket template keys added."""
+        context = super().get_context_data(**kwargs)
+        context["ticket_form"] = context.get("form")
+        context["editing"] = self.editing
+        return context
+
+
+class OwnerQuerySetMixin(LoginRequiredMixin):
+    """Restrict queryset to objects owned by the current user."""
+
+    def get_queryset(self):
+        """Return queryset filtered to the current user's objects."""
+        return super().get_queryset().filter(user=self.request.user)
+
+# --------- FEED VIEW (READ OPERATION)
+
 
 @login_required
-def feed(request):
+def feed(request: HttpRequest) -> HttpResponse:
     """Display the main feed for the logged-in user and followed accounts."""
+    # request.user is an authenticated user at runtime thanks to @login_required
     user = request.user
 
-    # IDs of users that the logged-in user follows
-    following_ids = UserFollows.objects.filter(
-        user=user
-    ).values_list("followed_user_id", flat=True)
+    # values_list(..., flat=True) yields a queryset of ints (user IDs) which is by default a tuple
+    # flat=True returns single value (not a tuple), eg. [3, 7, 12] instead of [(3,), (7,), (12,)]
+    following_ids: list[int] = list(
+        UserFollows.objects.filter(user=user).values_list("followed_user_id", flat=True)
+    )
 
-    # Include the user that's logged-in
-    visible_ids = list(following_ids) + [user.id]
+    # Convert queryset -> concrete Python list so we can concatenate safely
+    following_ids: list[int] = list(following_ids)
 
-    # Only show posts from these users
-    tickets = Ticket.objects.filter(user_id__in=visible_ids)
+    # user.pk is typed as int | None in Django stubs, but for an authenticated DB user it's an int.
+    user_id: int = cast(int, user.pk)
 
-    # Reviews:
-    #   - from the user + followed users
-    #   - OR any review that answers one of the user's tickets
-    reviews = Review.objects.filter(
+    # Final list of IDs visible in the feed
+    visible_ids: list[int] = [*following_ids, user_id]
+
+    # QuerySet[Ticket]: tickets written by visible users
+    tickets: QuerySet[Ticket] = Ticket.objects.filter(user_id__in=visible_ids)
+
+    # QuerySet[Review]: reviews written by visible users OR reviews answering one of *my* tickets
+    # distinct() removes duplicate rows if queryset ends up matching the same Review with more than 1 path
+    # Thereby keeping single / unique rows for Reviews
+    reviews: QuerySet[Review] = Review.objects.filter(
         Q(user_id__in=visible_ids) | Q(ticket__user=user)
     ).distinct()
 
-    # Merge + sort by creation date (newest first)
-    feed_items = sorted(
+    # chain() creates an iterator of (Ticket | Review).
+    # sorted() consumes it into a list[FeedItem] ordered by time_created desc.
+    feed_items: list[FeedItem] = sorted(
         chain(tickets, reviews),
         key=lambda obj: obj.time_created,
         reverse=True,
     )
 
-    # ---- Pagination (10 items per page) ----
-    paginator = Paginator(feed_items, 10)
+    # Paginator works over a Python sequence (here: list[FeedItem])
+    paginator: Paginator = Paginator(feed_items, 10)
+
+    # GET params are strings (or None). Use default "1" to keep type consistent.
     page_number = request.GET.get("page", 1)
 
+    # Page: contains the items for the current page
     try:
-        page_obj = paginator.page(page_number)
+        page_obj: Page = paginator.page(page_number)
     except PageNotAnInteger:
         page_obj = paginator.page(1)
     except EmptyPage:
         page_obj = paginator.page(paginator.num_pages)
 
+    # What templates consume:
     context = {
         "feed_items": page_obj.object_list,
         "page_obj": page_obj,
         # is_my_posts_page is False by default in template tag
     }
 
-    # AJAX requests get only the cards + pagination controls (partial)
-    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+    # Header lookup returns str | None
+    is_ajax: bool = request.headers.get("x-requested-with") == "XMLHttpRequest"
+
+    if is_ajax:
         return render(request, "reviews/partials/feed_list.html", context)
 
     # Normal full-page render
     return render(request, "reviews/pages/feed.html", context)
 
-
-@login_required
-def create_ticket(request):
-    """Display and handle the 'Demander une critique' ticket creation form."""
-    if request.method == "POST":
-        ticket_form = CreateTicketForm(request.POST, request.FILES)
-        if ticket_form.is_valid():
-            ticket = ticket_form.save(commit=False)
-            ticket.user = request.user
-            ticket.time_created = timezone.now()
-            ticket.save()
-            return redirect("reviews:feed")
-    else:
-        ticket_form = CreateTicketForm()
-
-    return render(
-        request,
-        "reviews/forms/submit_ticket.html",
-        {
-            "ticket_form": ticket_form,  # <- passes the ticket form the view expects
-            "editing": False,  # used by the component to show existing image
-        },
-    )
+# ----------------------------------------
+# TICKET CRUD Operations
+# ----------------------------------------
 
 
-@login_required
-def edit_ticket(request, ticket_id: int):
-    """Edit an existing ticket; keeps, updates, or removes image based on user actions."""
-    ticket = get_object_or_404(Ticket, pk=ticket_id, user=request.user)
+class TicketCreateView(TicketFormContextMixin, LoginRequiredMixin, CreateView):
+    """Create a Ticket for the logged-in user."""
 
-    # If user wishes to modify a ticket and clicks 'Modifier'
-    if request.method == "POST":
-        ticket_form = CreateTicketForm(request.POST, request.FILES, instance=ticket)
+    model = Ticket
+    form_class = CreateTicketForm
+    template_name = "reviews/forms/submit_ticket.html"
+    success_url = reverse_lazy("reviews:feed")
+    editing = False
 
-        delete_flag = request.POST.get("delete_existing_image") == "true"
-
-        # CASE 1: User clicked "Supprimer l’image"
-        if delete_flag:
-            # Remove image file from storage
-            if ticket.image:
-                ticket.image.delete(save=False)
-            ticket.image = None
-
-        # CASE 2: New file selected → handled automatically by form
-        # CASE 3: No change → form keeps the current image
-
-        if ticket_form.is_valid():
-            ticket_form.save()
-            return redirect(reverse("users:my_posts"))
-
-    # Else user wishes to delete form
-    else:
-        ticket_form = CreateTicketForm(instance=ticket)
-
-    return render(
-        request,
-        "reviews/forms/submit_ticket.html",
-        {
-            "ticket_form": ticket_form,     # <- passes the ticket form the view expects
-            "editing": True,
-        },
-    )
+    def form_valid(self, form):
+        """Attach the ticket owner before saving."""
+        form.instance.user = self.request.user
+        return super().form_valid(form)
 
 
-@login_required
-def delete_ticket(request, ticket_id):
-    """Delete one of the current user's tickets and redirect to their posts page."""
-    ticket = get_object_or_404(Ticket, id=ticket_id, user=request.user)
-    ticket.delete()
-    messages.success(request, "Le ticket a été supprimé avec succès.")
-    return redirect("users:my_posts")
+class TicketUpdateView(TicketFormContextMixin, OwnerQuerySetMixin, UpdateView):
+    """Update a Ticket owned by the logged-in user.
 
-
-@login_required
-def create_review(request, ticket_id: int | None = None):
+    Supports optional image removal via the `delete_existing_image` POST flag.
     """
-    Create a review.
 
-    - If `ticket_id` is provided, render a page with the referenced ticket on top
-      and a review form below. Submitting saves a Review linked to that Ticket.
-    - If `ticket_id` is absent, render a two-section form:
-        1) "Livre / Article" (creates a Ticket),
-        2) "Critique" (creates a Review linked to the newly created Ticket).
-      The 'Envoyer' button lives at the bottom of the second section.
+    pk_url_kwarg = "ticket_id"
+    model = Ticket
+    form_class = CreateTicketForm
+    template_name = "reviews/forms/submit_ticket.html"
+    success_url = reverse_lazy("users:my_posts")
+    editing = True
 
-    Redirects to the feed on success.
+    def form_valid(self, form):
+        """Handle optional image deletion and save the updated ticket."""
+        delete_flag = self.request.POST.get("delete_existing_image") == "true"
+        uploaded_new_image = "image" in self.request.FILES
+
+        # delete existing image only after validation, and only if not replacing it
+        if delete_flag and not uploaded_new_image and form.instance.image:
+            form.instance.image.delete(save=False)
+            form.instance.image = None
+
+        return super().form_valid(form)
+
+
+class TicketDeleteView(OwnerQuerySetMixin, DeleteView):
+    """Delete a Ticket owned by the logged-in user (POST only)."""
+
+    pk_url_kwarg = "ticket_id"
+    model = Ticket
+    success_url = reverse_lazy("users:my_posts")
+    http_method_names = ["post"]
+
+    def form_valid(self, form):
+        """Delete the ticket and display a success message."""
+        messages.success(self.request, "Le ticket a été supprimé avec succès.")
+        return super().form_valid(form)
+
+
+# ----------------------------------------
+# Review CRUD Operations
+# ----------------------------------------
+class ReviewCreateView(LoginRequiredMixin, View):
+    """Create a Review in one of two modes.
+
+    Modes:
+    - Response mode: create a Review for an existing Ticket (ticket_id provided).
+    - Standalone mode: create a Ticket and its Review in one submission.
+
+    Both modes enforce the unique constraint (user, ticket) safely.
     """
-    if ticket_id is not None:
-        # Response-to-ticket mode
-        # Desactivate 'Create review button' if Review has already been posted for a ticket
-        ticket = get_object_or_404(Ticket, pk=ticket_id)
-        # BLOCK review creation for already-reviewed ticket
-        if hasattr(ticket, "review"):
-            return redirect_with_toast(
-                request,
-                "error",
-                "Une critique existe déjà pour ce billet."
-            )
 
-        if request.method == "POST":
+    template_name = "reviews/forms/create_review.html"
+
+    def get(self, request, ticket_id: int | None = None):
+        """Render the review creation form (response or standalone mode)."""
+        if ticket_id is not None:
+            ticket = get_object_or_404(Ticket, pk=ticket_id)
+
+            if ticket.is_closed_for(request.user):
+                return redirect_with_toast(
+                    request, "error", "Vous avez déjà publié une critique pour ce billet."
+                )
+
+            form = ReviewForm(user=request.user, ticket=ticket)
+            return render(request, self.template_name, {
+                "page_title": "Créer une critique",
+                "is_response_mode": True,
+                "ticket": ticket,
+                "review_form": form,
+            })
+
+        # standalone mode
+        return render(request, self.template_name, {
+            "page_title": "Créer une critique",
+            "is_response_mode": False,
+            "ticket_form": CreateTicketForm(),
+            "review_form": ReviewForm(user=request.user, ticket=None),
+        })
+
+    def post(self, request, ticket_id: int | None = None):
+        """Handle review creation submission (response or standalone mode)."""
+        if ticket_id is not None:
+            ticket = get_object_or_404(Ticket, pk=ticket_id)
+
+            if ticket.is_closed_for(request.user):
+                return redirect_with_toast(
+                    request, "error", "Vous avez déjà publié une critique pour ce billet."
+                )
+
             form = ReviewForm(request.POST, user=request.user, ticket=ticket)
             if form.is_valid():
                 review = form.save(commit=False)
                 review.user = request.user
                 review.ticket = ticket
-                review.save()
+
+                try:
+                    with transaction.atomic():
+                        review.save()
+                except IntegrityError:
+                    # UniqueConstraint(user, ticket) hit (double submit / parallel request)
+                    return redirect_with_toast(
+                        request, "error", "Vous avez déjà publié une critique pour ce billet."
+                    )
+
                 return redirect(reverse("reviews:feed"))
-        else:
-            form = ReviewForm(user=request.user, ticket=ticket)
 
-        context = {
-            "page_title": "Créer une critique",
-            "is_response_mode": True,
-            "ticket": ticket,
-            "review_form": form,
-        }
-        return render(request, "reviews/forms/create_review.html", context)
+            return render(request, self.template_name, {
+                "page_title": "Créer une critique",
+                "is_response_mode": True,
+                "ticket": ticket,
+                "review_form": form,
+            })
 
-    # Standalone review mode (auto-create a Ticket, then a Review)
-    if request.method == "POST":
+        # --------------------------
+        # Standalone mode (Ticket + Review)
+        # --------------------------
         ticket_form = CreateTicketForm(request.POST, request.FILES)
         review_form = ReviewForm(request.POST, user=request.user, ticket=None)
+
         if ticket_form.is_valid() and review_form.is_valid():
-            new_ticket = ticket_form.save(commit=False)
-            new_ticket.user = request.user
-            new_ticket.save()
+            with transaction.atomic():
+                new_ticket = ticket_form.save(commit=False)
+                new_ticket.user = request.user
+                new_ticket.save()
 
-            # Now bind ticket into review and save
-            review = review_form.save(commit=False)
-            review.user = request.user
-            review.ticket = new_ticket
-            review.save()
+                review = review_form.save(commit=False)
+                review.user = request.user
+                review.ticket = new_ticket
+                review.save()
+
             return redirect(reverse("reviews:feed"))
-    else:
-        ticket_form = CreateTicketForm()
-        review_form = ReviewForm(user=request.user, ticket=None)
 
-    context = {
-        "page_title": "Créer une critique",
-        "is_response_mode": False,
-        "ticket_form": ticket_form,
-        "review_form": review_form,
-    }
-    return render(request, "reviews/forms/create_review.html", context)
+        return render(request, self.template_name, {
+            "page_title": "Créer une critique",
+            "is_response_mode": False,
+            "ticket_form": ticket_form,
+            "review_form": review_form,
+        })
 
 
-@login_required
-def edit_review(request, review_id: int):
-    """
-    Edit an existing review.
+class ReviewUpdateView(OwnerQuerySetMixin, SuccessMessageMixin, UpdateView):
+    """Update a Review owned by the logged-in user."""
 
-    - Only the owner (request.user) can edit.
-    - Pre-fills the form with existing review data.
-    - Always shows the associated ticket at the top (response mode layout).
-    """
-    review = get_object_or_404(Review, pk=review_id, user=request.user)
-    ticket = review.ticket  # the ticket this review responds to
+    model = Review
+    form_class = ReviewForm
+    template_name = "reviews/forms/create_review.html"
+    pk_url_kwarg = "review_id"
+    success_url = reverse_lazy("users:my_posts")
+    success_message = "La critique a été modifiée avec succès."
 
-    if request.method == "POST":
-        form = ReviewForm(
-            request.POST,
-            user=request.user,
-            ticket=ticket,
-            instance=review,  # 👈 pre-fill with existing review
-        )
-        if form.is_valid():
-            form.save()
-            messages.success(request, "La critique a été modifiée avec succès.")
-            return redirect(reverse("users:my_posts"))
-    else:
-        form = ReviewForm(
-            user=request.user,
-            ticket=ticket,
-            instance=review,  # 👈 initial values in the form
-        )
+    def get_form_kwargs(self):
+        """Inject user and ticket into ReviewForm."""
+        kwargs = super().get_form_kwargs()
+        review = self.get_object()
+        kwargs["user"] = self.request.user
+        kwargs["ticket"] = review.ticket
+        return kwargs
 
-    context = {
-        "page_title": "Modifier une critique",
-        "is_response_mode": True,   # same layout as "réponse à un ticket"
-        "ticket": ticket,
-        "review_form": form,
-        "editing": True,            # optional flag if you want different button text
-    }
-    return render(request, "reviews/forms/create_review.html", context)
+    def get_context_data(self, **kwargs):
+        """Match template context keys used by your existing template."""
+        context = super().get_context_data(**kwargs)
+        review = self.get_object()
+        context["page_title"] = "Modifier une critique"
+        context["is_response_mode"] = True
+        context["ticket"] = review.ticket
+        context["review_form"] = context.get("form")
+        context["editing"] = True
+        return context
 
 
-@login_required
-def delete_review(request, review_id):
-    """Delete a review if the current user is its author, otherwise return 403."""
-    review = get_object_or_404(Review, id=review_id)
+class ReviewDeleteView(OwnerQuerySetMixin, DeleteView):
+    """Delete a Review owned by the logged-in user (POST only)."""
 
-    if review.user != request.user:
-        return HttpResponseForbidden("Not allowed.")
+    model = Review
+    pk_url_kwarg = "review_id"
+    success_url = reverse_lazy("users:my_posts")
+    http_method_names = ["post"]
 
-    # Delete immediately (no confirmation screen)
-    review.delete()
-    return redirect("users:my_posts")
+    def form_valid(self, form):
+        """Delete the review and display a success message."""
+        messages.success(self.request, "La critique a été supprimée avec succès.")
+        return super().form_valid(form)

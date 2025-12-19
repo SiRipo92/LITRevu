@@ -165,10 +165,14 @@ class ReviewAndFeedViewsTests(TestCase):
 
     def test_create_review_response_mode_get(self):
         """GET create_review_for_ticket renders response mode with the target ticket."""
-        resp = self.client.get(self.urls["create_review_response"])
+        ticket = Ticket.objects.create(title="New", description="Ticket", user=self.other)
+        url = reverse("reviews:create_review_for_ticket", args=[ticket.id])
+
+        resp = self.client.get(url)
+
         self.assertEqual(resp.status_code, 200)
         self.assertTrue(resp.context["is_response_mode"])
-        self.assertEqual(resp.context["ticket"].id, self.ticket.id)
+        self.assertEqual(resp.context["ticket"].id, ticket.id)
 
     # ------------------------
     # CREATE REVIEW — STANDALONE MODE
@@ -245,14 +249,14 @@ class ReviewAndFeedViewsTests(TestCase):
     # DELETE REVIEW
     # ------------------------
 
-    def test_delete_review_get_redirects_and_deletes(self):
-        """GET delete_review deletes the review and redirects to my_posts."""
-        resp = self.client.get(self.urls["delete_review"])
+    def test_delete_review_post_redirects_and_deletes(self):
+        """POST delete_review deletes the review and redirects to my_posts."""
+        resp = self.client.post(self.urls["delete_review"])
         self.assertRedirects(resp, reverse("users:my_posts"))
         self.assertFalse(Review.objects.filter(id=self.review.id).exists())
 
-    def test_delete_review_wrong_user_forbidden(self):
-        """Deleting another user's review via POST should return HTTP 403."""
+    def test_delete_review_wrong_user_returns_404(self):
+        """Deleting another user's review via POST should return HTTP 404."""
         other_ticket = Ticket.objects.create(title="X", description="Y", user=self.other)
         other_review = Review.objects.create(
             headline="Bad",
@@ -262,5 +266,7 @@ class ReviewAndFeedViewsTests(TestCase):
             ticket=other_ticket,
         )
         url = reverse("reviews:delete_review", args=[other_review.id])
+
         resp = self.client.post(url)
-        self.assertEqual(resp.status_code, 403)
+
+        self.assertEqual(resp.status_code, 404)
