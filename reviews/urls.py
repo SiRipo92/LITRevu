@@ -11,14 +11,13 @@ urlpatterns = [
     path("", views.feed, name="feed"),
 
     # Tickets (Request for Critiques)
-    path("ticket/creer/", views.create_ticket, name="create_ticket"),
-    path("ticket/modifier/<int:ticket_id>/", views.edit_ticket, name="edit_ticket"),
-    path("ticket/supprimer/<int:ticket_id>/", views.delete_ticket, name="delete_ticket"),
+    path("ticket/creer/", views.TicketCreateView.as_view(), name="create_ticket"),
+    path("ticket/<int:ticket_id>/modifier/", views.TicketUpdateView.as_view(), name="edit_ticket"),
+    path("ticket/<int:ticket_id>/supprimer/", views.TicketDeleteView.as_view(), name="delete_ticket"),
 
     # Reviews (Creating a critique & responding to requests)
-    path("critique/creer/<int:ticket_id>/", views.create_review, name="create_review"),
-    path("critique/creer/", views.create_review, name="create_review"),
-    path("critique/creer/<int:ticket_id>/", views.create_review, name="create_review_for_ticket"),
-    path("critique/modifier/<int:review_id>/", views.edit_review, name="edit_review"),
-    path("critique/supprimer/<int:review_id>/", views.delete_review, name="delete_review"),
+    path("critique/creer/", views.ReviewCreateView.as_view(), name="create_review"),
+    path("critique/creer/<int:ticket_id>/", views.ReviewCreateView.as_view(), name="create_review_for_ticket"),
+    path("critique/<int:review_id>/modifier/", views.ReviewUpdateView.as_view(), name="edit_review"),
+    path("critique/<int:review_id>/supprimer/", views.ReviewDeleteView.as_view(), name="delete_review"),
 ]
