@@ -301,11 +301,11 @@ Name                                Stmts   Miss Branch BrPart  Cover   Missing
 -------------------------------------------------------------------------------
 reviews/admin.py                       10      0      0      0   100%
 reviews/apps.py                         4      0      0      0   100%
-reviews/forms.py                       33      2      6      1    87%   129-130
-reviews/models.py                      41      3      0      0    93%   47, 99, 114
-reviews/templatetags/card_tags.py      18      1      4      1    91%   59
+reviews/forms.py                       36      5      8      1    77%   130-134
+reviews/models.py                      45      3      0      0    93%   54, 110, 124
+reviews/templatetags/card_tags.py      18      1      4      1    91%   61
 reviews/urls.py                         4      0      0      0   100%
-reviews/views.py                      119     18     32      8    80%   57-60, 70, 111->120, 113->115, 120->127, 166, 173-179, 195->210, 232-241
+reviews/views.py                      154     22     16      5    82%   108-111, 124, 168->172, 210, 233-257, 283
 users/admin.py                         10      0      0      0   100%
 users/apps.py                           4      0      0      0   100%
 users/forms.py                         21      0      0      0   100%
@@ -313,7 +313,7 @@ users/models.py                        14      1      0      0    93%   42
 users/urls.py                           4      0      0      0   100%
 users/views.py                         75      5     20      1    94%   130-133, 143
 -------------------------------------------------------------------------------
-TOTAL                                 357     30     62     11    89%
+TOTAL                                 399     37     48      8    88%
 
 3 empty files skipped.
 ```
